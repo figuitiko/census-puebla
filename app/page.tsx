@@ -11,8 +11,18 @@ export default async function Home() {
         {user.name} <span className="text-sm opacity-60">({user.role})</span>
       </p>
       {user.role === "ADMIN" && (
-        <Link href="/admin/users" className="text-sm underline">
-          Administrar usuarios
+        <>
+          <Link href="/admin/users" className="text-sm underline">
+            Administrar usuarios
+          </Link>
+          <Link href="/admin/campaign" className="text-sm underline">
+            Campaña
+          </Link>
+        </>
+      )}
+      {(user.role === "ADMIN" || user.role === "COORDINADOR") && (
+        <Link href="/units" className="text-sm underline">
+          Unidades
         </Link>
       )}
       <SignOutButton />

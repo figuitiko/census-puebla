@@ -2,13 +2,7 @@
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Role } from "@/lib/generated/prisma/enums";
-
-const ROLE_LABELS: Record<Role, string> = {
-  ADMIN: "Admin",
-  COORDINADOR: "Coordinador",
-  ENCUESTADOR: "Encuestador",
-  VISOR: "Visor",
-};
+import { ROLE_LABELS } from "@/lib/roles";
 
 type Props = {
   value?: Role;

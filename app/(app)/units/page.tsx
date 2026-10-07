@@ -21,7 +21,7 @@ export default async function UnitsPage() {
 
   if (!campaign) {
     return (
-      <main className="mx-auto flex w-full max-w-4xl flex-col gap-4 p-6">
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-4 p-6">
         <h1 className="text-2xl font-semibold">Unidades</h1>
         <p className="text-sm text-muted-foreground">
           Todavía no hay campaña.{" "}
@@ -31,7 +31,7 @@ export default async function UnitsPage() {
             </Link>
           )}
         </p>
-      </main>
+      </div>
     );
   }
 
@@ -49,7 +49,7 @@ export default async function UnitsPage() {
   ]);
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-6">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-6">
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Unidades</h1>
@@ -95,6 +95,6 @@ export default async function UnitsPage() {
           ))}
         </TableBody>
       </Table>
-    </main>
+    </div>
   );
 }

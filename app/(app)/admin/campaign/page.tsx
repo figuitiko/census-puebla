@@ -7,7 +7,7 @@ export default async function CampaignPage() {
   const campaign = await getCampaign();
 
   return (
-    <main className="mx-auto flex w-full max-w-xl flex-col gap-6 p-6">
+    <div className="mx-auto flex w-full max-w-xl flex-col gap-6 p-6">
       <h1 className="text-2xl font-semibold">Campaña</h1>
       <CampaignForm
         defaults={
@@ -20,6 +20,6 @@ export default async function CampaignPage() {
           }
         }
       />
-    </main>
+    </div>
   );
 }

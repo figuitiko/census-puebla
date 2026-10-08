@@ -1,11 +1,13 @@
 import Link from "next/link";
-import { Building2, CalendarRange, Users, type LucideIcon } from "lucide-react";
+import { Building2, CalendarRange, ClipboardList, Users, type LucideIcon } from "lucide-react";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/dal";
 import { can, type Action } from "@/lib/permissions";
 import { ROLE_LABELS } from "@/lib/roles";
+import type { Role } from "@/lib/generated/prisma/enums";
 
-const SHORTCUTS: { title: string; description: string; href: string; icon: LucideIcon; action: Action }[] = [
+const SHORTCUTS: { title: string; description: string; href: string; icon: LucideIcon; action?: Action; roles?: Role[] }[] = [
+  { title: "Mis unidades", description: "Levantar las cédulas de tus unidades asignadas", href: "/campo", icon: ClipboardList, roles: ["ADMIN", "ENCUESTADOR"] },
   { title: "Unidades", description: "Crear y asignar unidades habitacionales", href: "/units", icon: Building2, action: "unit:assign" },
   { title: "Usuarios", description: "Altas, roles y accesos", href: "/admin/users", icon: Users, action: "admin:manage" },
   { title: "Campaña", description: "Fechas y parámetros del levantamiento", href: "/admin/campaign", icon: CalendarRange, action: "admin:manage" },
@@ -13,7 +15,9 @@ const SHORTCUTS: { title: string; description: string; href: string; icon: Lucid
 
 export default async function Home() {
   const user = await requireUser();
-  const shortcuts = SHORTCUTS.filter((item) => can(user, item.action));
+  const shortcuts = SHORTCUTS.filter(
+    (item) => (!item.action || can(user, item.action)) && (!item.roles || item.roles.includes(user.role)),
+  );
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 p-6">

@@ -6,6 +6,7 @@ import {
   Building2,
   CalendarRange,
   ChevronsUpDown,
+  ClipboardList,
   Home,
   LogOut,
   Users,
@@ -38,14 +39,16 @@ import { authClient } from "@/lib/auth-client";
 import { can, type Action } from "@/lib/permissions";
 import { ROLE_LABELS } from "@/lib/roles";
 import type { SessionUser } from "@/lib/dal";
+import type { Role } from "@/lib/generated/prisma/enums";
 
-type NavItem = { title: string; href: string; icon: LucideIcon; action?: Action };
+type NavItem = { title: string; href: string; icon: LucideIcon; action?: Action; roles?: Role[] };
 
 const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
   {
     label: "General",
     items: [
       { title: "Inicio", href: "/", icon: Home },
+      { title: "Mis unidades", href: "/campo", icon: ClipboardList, roles: ["ADMIN", "ENCUESTADOR"] },
       { title: "Unidades", href: "/units", icon: Building2, action: "unit:assign" },
     ],
   },
@@ -73,7 +76,9 @@ export function AppSidebar({ user }: { user: SessionUser }) {
 
   const groups = NAV_GROUPS.map((group) => ({
     ...group,
-    items: group.items.filter((item) => !item.action || can(user, item.action)),
+    items: group.items.filter(
+      (item) => (!item.action || can(user, item.action)) && (!item.roles || item.roles.includes(user.role)),
+    ),
   })).filter((group) => group.items.length > 0);
 
   async function signOut() {

@@ -10,6 +10,7 @@ import { STATUS_LABELS } from "@/lib/catalogs";
 import type { SubmissionStatus } from "@/lib/generated/prisma/enums";
 import { saveCedula, submitCedula } from "../actions";
 import { NOT_LOCATED_STEPS, STEPS, type CedulaValues, type Issue } from "../schema";
+import { Photos } from "./photos";
 import { SectionA, SectionB, SectionC, SectionD, SectionE } from "./sections";
 
 type Props = {
@@ -17,6 +18,9 @@ type Props = {
   folio: string;
   status: SubmissionStatus;
   initialVersion: number | null;
+  initialSubmissionId: string | null;
+  initialPhotos: { id: string }[];
+  minPhotos: number;
   initialValues: CedulaValues;
   visitedAt: string | null;
   responsible: string;
@@ -25,10 +29,24 @@ type Props = {
 
 const ALL_STEPS = [0, 1, 2, 3, 4];
 
-export function Wizard({ unitId, folio, status, initialVersion, initialValues, visitedAt, responsible, readOnly }: Props) {
+export function Wizard({
+  unitId,
+  folio,
+  status,
+  initialVersion,
+  initialSubmissionId,
+  initialPhotos,
+  minPhotos,
+  initialValues,
+  visitedAt,
+  responsible,
+  readOnly,
+}: Props) {
   const router = useRouter();
   const [values, setValues] = useState(initialValues);
   const [version, setVersion] = useState(initialVersion);
+  const [submissionId, setSubmissionId] = useState(initialSubmissionId);
+  const [photos, setPhotos] = useState(initialPhotos);
   const [position, setPosition] = useState(0);
   const [busy, setBusy] = useState(false);
   const [issues, setIssues] = useState<Issue[]>([]);
@@ -41,15 +59,21 @@ export function Wizard({ unitId, folio, status, initialVersion, initialValues, v
     setValues((current) => ({ ...current, [key]: value }));
   }
 
-  /** Persists the draft. Returns the new version, or null if it failed (already toasted). */
-  async function persist(): Promise<number | null> {
+  /** Persists the draft. Returns the saved version + submission id, or null if it failed (already toasted). */
+  async function persist() {
     const result = await saveCedula(unitId, version, values);
     if (!result.ok) {
       toast.error(result.error);
       return null;
     }
     setVersion(result.version);
-    return result.version;
+    setSubmissionId(result.submissionId);
+    return result;
+  }
+
+  /** Photos need a submission to hang off: save the draft first if it does not exist yet. */
+  async function ensureSaved() {
+    return (await persist())?.submissionId ?? null;
   }
 
   async function run(task: () => Promise<void>) {
@@ -76,7 +100,7 @@ export function Wizard({ unitId, folio, status, initialVersion, initialValues, v
       const saved = await persist();
       if (saved === null) return;
 
-      const result = await submitCedula(unitId, saved);
+      const result = await submitCedula(unitId, saved.version);
       if (!result.ok) {
         toast.error(result.error);
         if (result.issues?.length) {
@@ -138,7 +162,25 @@ export function Wizard({ unitId, folio, status, initialVersion, initialValues, v
         {step === 1 && <SectionB values={values} set={set} />}
         {step === 2 && <SectionC values={values} set={set} />}
         {step === 3 && <SectionD values={values} set={set} />}
-        {step === 4 && <SectionE values={values} set={set} />}
+        {step === 4 && (
+          <SectionE
+            values={values}
+            set={set}
+            photos={
+              <Photos
+                unitId={unitId}
+                submissionId={submissionId}
+                photos={photos}
+                minPhotos={minPhotos}
+                required={values.located !== false}
+                disabled={readOnly || busy}
+                ensureSaved={ensureSaved}
+                onAdd={(id) => setPhotos((current) => [...current, { id }])}
+                onRemove={(id) => setPhotos((current) => current.filter((p) => p.id !== id))}
+              />
+            }
+          />
+        )}
       </fieldset>
 
       {!readOnly && (

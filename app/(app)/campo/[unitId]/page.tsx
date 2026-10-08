@@ -22,6 +22,9 @@ export default async function CapturePage(props: PageProps<"/campo/[unitId]">) {
       folio={capture.folio}
       status={capture.status}
       initialVersion={capture.version}
+      initialSubmissionId={capture.submissionId}
+      initialPhotos={capture.evidence}
+      minPhotos={capture.minPhotos}
       initialValues={capture.values}
       visitedAt={capture.visitedAt?.toISOString() ?? null}
       responsible={capture.authorName ?? user.name}

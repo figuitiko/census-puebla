@@ -1,39 +1,16 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireUser } from "@/lib/dal";
-import { can } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
-import { canOpenUnit, getCapture } from "./queries";
+import { authorizeEdit } from "./authorize";
+import { getCapture } from "./queries";
 import { cedulaSchema, normalize, submitIssues, type CedulaValues, type Issue } from "./schema";
 
 export type SaveResult =
-  | { ok: true; version: number }
+  | { ok: true; version: number; submissionId: string }
   | { ok: false; error: string; issues?: Issue[] };
 
 const CONFLICT = "Esta cédula cambió desde que la abriste. Recargá la página para ver la versión actual.";
-
-/** Loads the unit and checks the caller may edit its cedula. */
-async function authorizeEdit(unitId: string) {
-  const user = await requireUser();
-  const unit = await prisma.campaignUnit.findUnique({
-    where: { id: unitId },
-    select: {
-      id: true,
-      complexId: true,
-      assignedToId: true,
-      submission: { select: { id: true, status: true, version: true } },
-    },
-  });
-
-  if (!unit || !canOpenUnit(user, unit)) return { ok: false, error: "No tenés acceso a esta unidad" } as const;
-
-  const status = unit.submission?.status ?? "DRAFT";
-  if (!can(user, "submission:edit", { assigneeId: unit.assignedToId, status })) {
-    return { ok: false, error: "Esta cédula ya no se puede editar" } as const;
-  }
-  return { ok: true, user, unit } as const;
-}
 
 function submissionData(v: CedulaValues) {
   return {
@@ -71,7 +48,7 @@ export async function saveCedula(
   if ((unit.submission?.version ?? null) !== expectedVersion) return { ok: false, error: CONFLICT };
 
   try {
-    const version = await prisma.$transaction(async (tx) => {
+    const saved = await prisma.$transaction(async (tx) => {
       await tx.housingComplex.update({
         where: { id: unit.complexId },
         data: {
@@ -128,11 +105,11 @@ export async function saveCedula(
         data: v.orgFigures.map((figure) => ({ submissionId, figure })),
       });
 
-      return nextVersion;
+      return { version: nextVersion, submissionId };
     });
 
     revalidatePath("/campo");
-    return { ok: true, version };
+    return { ok: true, ...saved };
   } catch (error) {
     // Lost the version race, or a concurrent first save hit the unique unitId index.
     if (error instanceof Error && (error.message === "CONFLICT" || (error as { code?: string }).code === "P2002")) {
@@ -158,6 +135,13 @@ export async function submitCedula(unitId: string, expectedVersion: number): Pro
   if (!capture) return { ok: false, error: "Unidad no encontrada" };
 
   const issues = submitIssues(capture.values);
+  // Field 25: a located unit needs the campaign's minimum of confirmed photos. Not-located: optional.
+  if (capture.values.located === true && capture.evidence.length < capture.minPhotos) {
+    issues.push({
+      step: 4,
+      message: `25. Cargá al menos ${capture.minPhotos} fotos (tenés ${capture.evidence.length})`,
+    });
+  }
   if (issues.length > 0) {
     return { ok: false, error: "Faltan datos para enviar la cédula", issues };
   }
@@ -173,5 +157,5 @@ export async function submitCedula(unitId: string, expectedVersion: number): Pro
   if (count === 0) return { ok: false, error: CONFLICT };
 
   revalidatePath("/campo");
-  return { ok: true, version: expectedVersion + 1 };
+  return { ok: true, version: expectedVersion + 1, submissionId: unit.submission.id };
 }

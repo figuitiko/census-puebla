@@ -208,7 +208,7 @@ export function SectionD({ values, set }: SectionProps) {
   );
 }
 
-export function SectionE({ values, set }: SectionProps) {
+export function SectionE({ values, set, photos }: SectionProps & { photos: React.ReactNode }) {
   const located = values.located !== false;
 
   return (
@@ -235,9 +235,9 @@ export function SectionE({ values, set }: SectionProps) {
               onChange={(v) => set("docType", v)}
             />
           )}
-          <Note>25. La evidencia fotográfica se carga en una etapa posterior del desarrollo.</Note>
         </>
       )}
+      {photos}
       <Field
         label="26. Observaciones o incidencias"
         hint={values.located === false ? "Obligatorio: registrá por qué no se localizó." : undefined}

@@ -31,6 +31,9 @@ export async function listCaptureUnits(user: SessionUser) {
 
 export type CaptureData = {
   unitId: string;
+  submissionId: string | null;
+  minPhotos: number;
+  evidence: { id: string }[]; // confirmed photos only
   folio: string;
   assignedToId: string | null;
   status: SubmissionStatus;
@@ -45,8 +48,14 @@ export async function getCapture(unitId: string): Promise<CaptureData | null> {
     where: { id: unitId },
     include: {
       complex: true,
+      campaign: { select: { minPhotos: true } },
       submission: {
         include: {
+          evidence: {
+            where: { kind: "PHOTO", status: "CONFIRMED" },
+            select: { id: true },
+            orderBy: { createdAt: "asc" },
+          },
           privateUnits: true,
           equipment: true,
           orgFigures: true,
@@ -93,6 +102,9 @@ export async function getCapture(unitId: string): Promise<CaptureData | null> {
 
   return {
     unitId: unit.id,
+    submissionId: s?.id ?? null,
+    minPhotos: unit.campaign.minPhotos,
+    evidence: s?.evidence ?? [],
     folio: unit.folio,
     assignedToId: unit.assignedToId,
     status: s?.status ?? "DRAFT",

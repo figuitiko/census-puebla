@@ -11,7 +11,15 @@ import {
   PRIVATE_UNIT_LABELS,
   SOURCE_LABELS,
 } from "@/lib/catalogs";
-import { privateUnitsKnownSum, privateUnitsTotal, PRIVATE_UNIT_TYPES, type CedulaValues } from "../schema";
+import { useState } from "react";
+import {
+  coordinateHint,
+  parseCoordinates,
+  privateUnitsKnownSum,
+  privateUnitsTotal,
+  PRIVATE_UNIT_TYPES,
+  type CedulaValues,
+} from "../schema";
 import {
   ChoiceField,
   CountField,
@@ -40,6 +48,47 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
   );
 }
 
+/** Field 4. Google Maps copies "lat, lng" as one string, so accept it pasted in one go. */
+function Coordinates({ values, set }: SectionProps) {
+  const [pasted, setPasted] = useState("");
+  const parsed = pasted.trim() ? parseCoordinates(pasted) : null;
+  const hint = coordinateHint(values.lat, values.lng);
+
+  function onPaste(text: string) {
+    setPasted(text);
+    const coords = parseCoordinates(text);
+    if (coords) {
+      set("lat", coords.lat);
+      set("lng", coords.lng);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Field label="4. Georreferenciación" hint="Pegá las coordenadas tal como las copia Google Maps (ej. 19.3222, -98.2213).">
+        <Input
+          value={pasted}
+          placeholder="19.3222, -98.2213"
+          onChange={(event) => onPaste(event.target.value)}
+          className="h-11"
+        />
+        {pasted.trim() && !parsed && (
+          <p className="text-xs text-destructive">No pude leer el par. Usá el formato: latitud, longitud.</p>
+        )}
+      </Field>
+      <div className="grid grid-cols-2 gap-4">
+        <DecimalField label="Latitud" placeholder="19.0414" value={values.lat} onChange={(v) => set("lat", v)} />
+        <DecimalField label="Longitud" placeholder="-98.2063" value={values.lng} onChange={(v) => set("lng", v)} />
+      </div>
+      {hint && (
+        <p role="alert" className="text-sm text-destructive">
+          {hint}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function SectionA({
   values,
   set,
@@ -56,20 +105,7 @@ export function SectionA({
       />
       <ReadOnlyField label="3. Persona responsable" value={responsible} />
 
-      <div className="grid grid-cols-2 gap-4">
-        <DecimalField
-          label="4. Latitud"
-          placeholder="19.0414"
-          value={values.lat}
-          onChange={(v) => set("lat", v)}
-        />
-        <DecimalField
-          label="4. Longitud"
-          placeholder="-98.2063"
-          value={values.lng}
-          onChange={(v) => set("lng", v)}
-        />
-      </div>
+      <Coordinates values={values} set={set} />
       <TextField label="5. Nombre de la UH" value={values.name} maxLength={200} onChange={(v) => set("name", v)} />
       <TextField label="6. Junta auxiliar" value={values.juntaAuxiliar} maxLength={120} onChange={(v) => set("juntaAuxiliar", v)} />
       <TextField label="7. Colonia" value={values.colonia} maxLength={120} onChange={(v) => set("colonia", v)} />

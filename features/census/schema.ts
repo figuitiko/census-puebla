@@ -36,8 +36,16 @@ export const cedulaSchema = z.object({
   juntaAuxiliar: text(120), // 6
   colonia: text(120), // 7
   address: text(300), // 8
-  lat: z.number().min(LAT_RANGE.min, "Latitud fuera de México").max(LAT_RANGE.max, "Latitud fuera de México").nullable(), // 4
-  lng: z.number().min(LNG_RANGE.min, "Longitud fuera de México").max(LNG_RANGE.max, "Longitud fuera de México").nullable(), // 4
+  lat: z
+    .number()
+    .min(LAT_RANGE.min, { error: (issue) => `Latitud fuera de México (recibí ${issue.input})` })
+    .max(LAT_RANGE.max, { error: (issue) => `Latitud fuera de México (recibí ${issue.input})` })
+    .nullable(), // 4
+  lng: z
+    .number()
+    .min(LNG_RANGE.min, { error: (issue) => `Longitud fuera de México (recibí ${issue.input})` })
+    .max(LNG_RANGE.max, { error: (issue) => `Longitud fuera de México (recibí ${issue.input})` })
+    .nullable(), // 4
   located: z.boolean().nullable(), // 9
 
   // B. Viviendas y unidades privativas
@@ -72,6 +80,31 @@ export const cedulaSchema = z.object({
 });
 
 export type CedulaValues = z.infer<typeof cedulaSchema>;
+
+const inRange = (value: number, range: { min: number; max: number }) => value >= range.min && value <= range.max;
+
+/** Splits "19.3222, -98.2213" (what Google Maps copies) into numbers. Null if it is not a pair. */
+export function parseCoordinates(input: string): { lat: number; lng: number } | null {
+  const match = input.trim().match(/^(-?\d+(?:\.\d+)?)\s*[,;\s]\s*(-?\d+(?:\.\d+)?)$/);
+  if (!match) return null;
+  return { lat: Number(match[1]), lng: Number(match[2]) };
+}
+
+/** Human hint for the likely mistake behind an out-of-range pair, or null if it looks fine. */
+export function coordinateHint(lat: number | null, lng: number | null): string | null {
+  if (lat === null || lng === null) return null;
+  const latOk = inRange(lat, LAT_RANGE);
+  const lngOk = inRange(lng, LNG_RANGE);
+  if (latOk && lngOk) return null;
+  if (inRange(lng, LAT_RANGE) && inRange(lat, LNG_RANGE)) {
+    return "Parece que invertiste latitud y longitud: la latitud va primero (≈ 19) y la longitud después (≈ -98).";
+  }
+  if (!lngOk && inRange(-lng, LNG_RANGE)) {
+    return "En México la longitud es negativa: agregá el signo − (ej. -98.22).";
+  }
+  if (!latOk) return `La latitud ${lat} está fuera de México (debe estar entre ${LAT_RANGE.min} y ${LAT_RANGE.max}).`;
+  return `La longitud ${lng} está fuera de México (debe estar entre ${LNG_RANGE.min} y ${LNG_RANGE.max}).`;
+}
 
 const NO_PRIVATE_UNITS: CedulaValues["privateUnits"] = {
   LOCAL_COMERCIAL: null,

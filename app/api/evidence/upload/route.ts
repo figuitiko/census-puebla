@@ -1,6 +1,6 @@
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { authorizeEdit } from "@/features/census/authorize";
-import { assertPrivateStore } from "@/lib/blob-health";
+import { assertBlobStore } from "@/lib/blob-health";
 import { EVIDENCE_TYPES, isEvidencePathname, MAX_EVIDENCE_BYTES, MAX_PHOTOS_PER_SUBMISSION } from "@/lib/blob";
 import { prisma } from "@/lib/prisma";
 
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       onBeforeGenerateToken: async (pathname, clientPayload) => {
         const auth = await authorizeEdit(unitIdFrom(clientPayload));
         if (!auth.ok) throw new Error(auth.error);
-        await assertPrivateStore();
+        await assertBlobStore();
 
         const submission = auth.unit.submission;
         if (!submission) throw new Error("Guardá la cédula antes de subir fotos");

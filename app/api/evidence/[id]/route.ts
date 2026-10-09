@@ -1,5 +1,6 @@
 import { get } from "@vercel/blob";
 import type { NextRequest } from "next/server";
+import { BLOB_ACCESS } from "@/lib/blob";
 import { getUser } from "@/lib/dal";
 import { can } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
@@ -24,7 +25,7 @@ export async function GET(_request: NextRequest, ctx: RouteContext<"/api/evidenc
     return new Response("Sin permiso", { status: 403 });
   }
 
-  const blob = await get(evidence.pathname, { access: "private" });
+  const blob = await get(evidence.pathname, { access: BLOB_ACCESS });
   if (!blob || blob.statusCode !== 200) return new Response("No encontrado", { status: 404 });
 
   return new Response(blob.stream, {

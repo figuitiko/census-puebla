@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { deleteEvidence, confirmEvidence } from "@/features/evidence/actions";
-import { evidencePrefix, safeFileName } from "@/lib/blob";
+import { BLOB_ACCESS, evidencePrefix, safeFileName } from "@/lib/blob";
 
 const UPLOAD_TIMEOUT_MS = 120_000;
 
@@ -62,7 +62,7 @@ export function Photos({ unitId, submissionId, photos, minPhotos, required, disa
 
       try {
         const blob = await upload(`${evidencePrefix(sid)}${safeFileName(file.name)}`, file, {
-          access: "private",
+          access: BLOB_ACCESS,
           handleUploadUrl: "/api/evidence/upload",
           clientPayload: JSON.stringify({ unitId }),
           abortSignal: controller.signal,

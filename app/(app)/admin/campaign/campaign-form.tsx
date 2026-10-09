@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { CONTRACT_MIN_PHOTOS } from "@/lib/campaign-rules";
 import { saveCampaign, type ActionState } from "./actions";
 
 type Props = {
@@ -20,6 +21,8 @@ type Props = {
 const initialState: ActionState = { ok: false };
 
 export function CampaignForm({ defaults }: Props) {
+  const [minPhotos, setMinPhotos] = useState(String(defaults?.minPhotos ?? CONTRACT_MIN_PHOTOS));
+  const belowContract = Number(minPhotos) < CONTRACT_MIN_PHOTOS;
   const [state, action, pending] = useActionState(
     async (prev: ActionState, formData: FormData) => {
       const result = await saveCampaign(prev, formData);
@@ -51,7 +54,13 @@ export function CampaignForm({ defaults }: Props) {
       </div>
       <div className="flex flex-col gap-2">
         <Label htmlFor="minPhotos">Fotos válidas requeridas por unidad localizada</Label>
-        <Input id="minPhotos" name="minPhotos" type="number" min={0} required defaultValue={defaults?.minPhotos ?? 10} />
+        <Input id="minPhotos" name="minPhotos" type="number" min={0} required value={minPhotos} onChange={(event) => setMinPhotos(event.target.value)} />
+        {belowContract && (
+          <p role="status" className="rounded-md border border-destructive/50 p-3 text-sm text-destructive">
+            Valor de prueba: el levantamiento real exige {CONTRACT_MIN_PHOTOS} fotos por unidad localizada. Restablecelo
+            antes de usar datos reales.
+          </p>
+        )}
       </div>
       {state.error && (
         <p role="alert" className="text-sm text-destructive">

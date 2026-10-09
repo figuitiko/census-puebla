@@ -47,6 +47,8 @@ export async function POST(request: Request) {
     });
     return Response.json(json);
   } catch (error) {
+    // The Blob client SDK hides this message behind "Failed to retrieve the client token", so log it here.
+    console.error("[evidence/upload]", error instanceof Error ? error.message : error);
     return Response.json({ error: error instanceof Error ? error.message : "Error al subir" }, { status: 400 });
   }
 }

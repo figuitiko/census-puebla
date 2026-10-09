@@ -21,6 +21,7 @@ type Props = {
   initialSubmissionId: string | null;
   initialPhotos: { id: string }[];
   minPhotos: number;
+  returnNote: { comment: string; reviewerName: string } | null;
   initialValues: CedulaValues;
   visitedAt: string | null;
   responsible: string;
@@ -37,6 +38,7 @@ export function Wizard({
   initialSubmissionId,
   initialPhotos,
   minPhotos,
+  returnNote,
   initialValues,
   visitedAt,
   responsible,
@@ -131,6 +133,12 @@ export function Wizard({
           </p>
           <Progress value={((position + 1) / visible.length) * 100} />
         </div>
+        {status === "RETURNED" && returnNote && (
+          <div role="status" className="rounded-md border border-destructive/50 p-3 text-sm">
+            <p className="font-medium text-destructive">Devuelta por {returnNote.reviewerName}</p>
+            <p className="mt-1 whitespace-pre-wrap">{returnNote.comment}</p>
+          </div>
+        )}
         {readOnly && (
           <p className="rounded-md border bg-muted p-3 text-sm text-muted-foreground">
             Esta cédula está en modo lectura.

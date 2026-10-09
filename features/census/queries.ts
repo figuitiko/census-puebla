@@ -39,7 +39,10 @@ export type CaptureData = {
   status: SubmissionStatus;
   version: number | null; // null = no submission yet
   visitedAt: Date | null;
+  submittedAt: Date | null;
   authorName: string | null;
+  /** Latest review, so the encuestador sees why a cedula came back. */
+  latestReview: { decision: "APPROVED" | "RETURNED"; comment: string | null; at: Date; reviewerName: string } | null;
   values: CedulaValues;
 };
 
@@ -60,6 +63,11 @@ export async function getCapture(unitId: string): Promise<CaptureData | null> {
           equipment: true,
           orgFigures: true,
           author: { select: { name: true } },
+          reviews: {
+            orderBy: { createdAt: "desc" },
+            take: 1,
+            include: { reviewer: { select: { name: true } } },
+          },
         },
       },
     },
@@ -110,7 +118,16 @@ export async function getCapture(unitId: string): Promise<CaptureData | null> {
     status: s?.status ?? "DRAFT",
     version: s?.version ?? null,
     visitedAt: s?.visitedAt ?? null,
+    submittedAt: s?.submittedAt ?? null,
     authorName: s?.author.name ?? null,
+    latestReview: s?.reviews[0]
+      ? {
+          decision: s.reviews[0].decision,
+          comment: s.reviews[0].comment,
+          at: s.reviews[0].createdAt,
+          reviewerName: s.reviews[0].reviewer.name,
+        }
+      : null,
     values,
   };
 }

@@ -6,6 +6,7 @@ import {
   Building2,
   CalendarRange,
   ChevronsUpDown,
+  ClipboardCheck,
   ClipboardList,
   Home,
   LogOut,
@@ -50,6 +51,7 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
       { title: "Inicio", href: "/", icon: Home },
       { title: "Mis unidades", href: "/campo", icon: ClipboardList, roles: ["ADMIN", "ENCUESTADOR"] },
       { title: "Unidades", href: "/units", icon: Building2, action: "unit:assign" },
+      { title: "Revisión", href: "/review", icon: ClipboardCheck, action: "submission:review" },
     ],
   },
   {

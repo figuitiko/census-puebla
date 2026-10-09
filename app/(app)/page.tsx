@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Building2, CalendarRange, ClipboardCheck, ClipboardList, Users, type LucideIcon } from "lucide-react";
+import { Building2, CalendarRange, ClipboardCheck, ClipboardList, LayoutDashboard, Users, type LucideIcon } from "lucide-react";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/dal";
 import { can, type Action } from "@/lib/permissions";
@@ -7,6 +7,7 @@ import { ROLE_LABELS } from "@/lib/roles";
 import type { Role } from "@/lib/generated/prisma/enums";
 
 const SHORTCUTS: { title: string; description: string; href: string; icon: LucideIcon; action?: Action; roles?: Role[] }[] = [
+  { title: "Tablero", description: "Avance, indicadores, mapa y registro de unidades", href: "/dashboard", icon: LayoutDashboard, roles: ["ADMIN", "COORDINADOR", "VISOR"] },
   { title: "Mis unidades", description: "Levantar las cédulas de tus unidades asignadas", href: "/campo", icon: ClipboardList, roles: ["ADMIN", "ENCUESTADOR"] },
   { title: "Revisión", description: "Aprobar o devolver las cédulas enviadas", href: "/review", icon: ClipboardCheck, action: "submission:review" },
   { title: "Unidades", description: "Crear y asignar unidades habitacionales", href: "/units", icon: Building2, action: "unit:assign" },

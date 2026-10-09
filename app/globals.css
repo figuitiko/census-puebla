@@ -7,7 +7,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-geist-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -128,3 +128,47 @@
     @apply font-sans;
   }
 }
+/*
+ * Dashboard data-viz tokens. State colors are an ORDINAL blue ramp (progress) plus orange for the
+ * "returned" exception and a neutral gray for "not started". Validated with the dataviz skill:
+ * ordinal ramp passes in both modes, orange-vs-neighbours CVD dE >= 9.8, normal-vision >= 16.7.
+ * Dark mode flips the ramp (further along = lighter) and follows the app's `.dark` class.
+ */
+:root {
+  --viz-surface: #fcfcfb;
+  --viz-ink: #0b0b0b;
+  --viz-ink-2: #52514e;
+  --viz-muted: #898781;
+  --viz-grid: #e1e0d9;
+  --viz-baseline: #c3c2b7;
+  --viz-meter-fill: #2a78d6;
+  --viz-meter-track: #cde2fb;
+  --state-approved: #184f95;
+  --state-submitted: #3987e5;
+  --state-draft: #86b6ef;
+  --state-returned: #eb6834;
+  --state-notstarted: #898781;
+}
+.dark {
+  --viz-surface: #1a1a19;
+  --viz-ink: #ffffff;
+  --viz-ink-2: #c3c2b7;
+  --viz-muted: #898781;
+  --viz-grid: #2c2c2a;
+  --viz-baseline: #383835;
+  --viz-meter-fill: #3987e5;
+  --viz-meter-track: #0d366b;
+  --state-approved: #86b6ef;
+  --state-submitted: #3987e5;
+  --state-draft: #184f95;
+  --state-returned: #d95926;
+  --state-notstarted: #898781;
+}
+
+/* Leaflet circle markers: CSS beats the SVG presentation attributes Leaflet sets, so the map shares the tokens. */
+.unit-marker { stroke: var(--viz-surface); stroke-width: 2px; fill-opacity: 1; cursor: pointer; }
+.unit-marker.state-approved { fill: var(--state-approved); }
+.unit-marker.state-submitted { fill: var(--state-submitted); }
+.unit-marker.state-draft { fill: var(--state-draft); }
+.unit-marker.state-returned { fill: var(--state-returned); }
+.unit-marker.state-notstarted { fill: var(--state-notstarted); }

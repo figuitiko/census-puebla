@@ -9,6 +9,7 @@ import {
   ClipboardCheck,
   ClipboardList,
   Home,
+  LayoutDashboard,
   LogOut,
   Users,
   type LucideIcon,
@@ -49,6 +50,7 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     label: "General",
     items: [
       { title: "Inicio", href: "/", icon: Home },
+      { title: "Tablero", href: "/dashboard", icon: LayoutDashboard, roles: ["ADMIN", "COORDINADOR", "VISOR"] },
       { title: "Mis unidades", href: "/campo", icon: ClipboardList, roles: ["ADMIN", "ENCUESTADOR"] },
       { title: "Unidades", href: "/units", icon: Building2, action: "unit:assign" },
       { title: "Revisión", href: "/review", icon: ClipboardCheck, action: "submission:review" },

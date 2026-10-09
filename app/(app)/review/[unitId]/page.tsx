@@ -2,8 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { getCapture } from "@/features/census/queries";
+import { EvidenceGrid } from "@/features/evidence/components/evidence-grid";
 import { CedulaSummary } from "@/features/review/components/cedula-summary";
 import { ReviewForm } from "@/features/review/components/review-form";
+import { ReviewHistory } from "@/features/review/components/review-history";
 import { getReviewHistory } from "@/features/review/queries";
 import { STATUS_LABELS } from "@/lib/catalogs";
 import { requireCan } from "@/lib/dal";
@@ -61,40 +63,13 @@ export default async function ReviewDetailPage(props: PageProps<"/review/[unitId
             {capture.evidence.length}/{capture.minPhotos}
           </Badge>
         </div>
-        {capture.evidence.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Sin fotos.</p>
-        ) : (
-          <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-            {capture.evidence.map((photo, index) => (
-              <li key={photo.id} className="aspect-square overflow-hidden rounded-md border bg-muted">
-                <a href={`/api/evidence/${photo.id}`} target="_blank" rel="noreferrer">
-                  {/* Private route behind auth: next/image's optimizer cannot authenticate, a plain img is intended. */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`/api/evidence/${photo.id}`} alt={`Foto ${index + 1}`} loading="lazy" className="size-full object-cover" />
-                </a>
-              </li>
-            ))}
-          </ul>
-        )}
+        <EvidenceGrid photos={capture.evidence} />
       </section>
 
       {history.length > 0 && (
         <section className="flex flex-col gap-3">
           <h2 className="text-base font-semibold">Historial de revisión</h2>
-          <ul className="flex flex-col gap-2">
-            {history.map((review) => (
-              <li key={review.id} className="rounded-md border p-3 text-sm">
-                <p className="font-medium">
-                  {review.decision === "APPROVED" ? "Aprobada" : "Devuelta"} por {review.reviewer.name}
-                  <span className="font-normal text-muted-foreground">
-                    {" · "}
-                    {review.createdAt.toLocaleString("es-MX")}
-                  </span>
-                </p>
-                {review.comment && <p className="mt-1 whitespace-pre-wrap">{review.comment}</p>}
-              </li>
-            ))}
-          </ul>
+          <ReviewHistory entries={history} />
         </section>
       )}
     </div>

@@ -17,8 +17,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { deleteEvidence, confirmEvidence } from "@/features/evidence/actions";
 import { evidencePrefix, safeFileName } from "@/lib/blob";
+
+const UPLOAD_TIMEOUT_MS = 120_000;
 
 type Props = {
   unitId: string;
@@ -35,31 +38,60 @@ type Props = {
 
 export function Photos({ unitId, submissionId, photos, minPhotos, required, disabled, ensureSaved, onAdd, onRemove }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const [progress, setProgress] = useState<{ done: number; total: number; percent: number } | null>(null);
   const uploading = progress !== null;
+  const abortRef = useRef<AbortController | null>(null);
+  const cancelledRef = useRef(false);
 
   async function onFiles(files: File[]) {
     if (files.length === 0) return;
     const sid = submissionId ?? (await ensureSaved());
     if (!sid) return;
 
-    setProgress({ done: 0, total: files.length });
+    cancelledRef.current = false;
+    setProgress({ done: 0, total: files.length, percent: 0 });
+
     for (const [index, file] of files.entries()) {
+      if (cancelledRef.current) break;
+
+      // The SDK retries failed requests with backoff for minutes, so a rejected upload would look
+      // frozen. Abort after UPLOAD_TIMEOUT_MS and tell the user instead.
+      const controller = new AbortController();
+      abortRef.current = controller;
+      const timer = setTimeout(() => controller.abort(), UPLOAD_TIMEOUT_MS);
+
       try {
         const blob = await upload(`${evidencePrefix(sid)}${safeFileName(file.name)}`, file, {
           access: "private",
           handleUploadUrl: "/api/evidence/upload",
           clientPayload: JSON.stringify({ unitId }),
+          abortSignal: controller.signal,
+          onUploadProgress: ({ percentage }) =>
+            setProgress({ done: index, total: files.length, percent: Math.round(percentage) }),
         });
         const result = await confirmEvidence(unitId, blob.pathname);
         if (result.ok) onAdd(result.id);
         else toast.error(`${file.name}: ${result.error}`);
       } catch (error) {
-        toast.error(`${file.name}: ${error instanceof Error ? error.message : "no se pudo subir"}`);
+        if (cancelledRef.current) break;
+        const timedOut = error instanceof Error && error.name.includes("Abort");
+        toast.error(
+          timedOut
+            ? `${file.name}: tardó demasiado en subir. Revisá tu conexión o avisá al administrador.`
+            : `${file.name}: ${error instanceof Error ? error.message : "no se pudo subir"}`,
+        );
+      } finally {
+        clearTimeout(timer);
       }
-      setProgress({ done: index + 1, total: files.length });
+      setProgress({ done: index + 1, total: files.length, percent: 0 });
     }
+    abortRef.current = null;
     setProgress(null);
+  }
+
+  function cancel() {
+    cancelledRef.current = true;
+    abortRef.current?.abort();
   }
 
   async function remove(id: string) {
@@ -97,10 +129,26 @@ export function Photos({ unitId, submissionId, photos, minPhotos, required, disa
           void onFiles(files);
         }}
       />
-      <Button type="button" variant="outline" disabled={disabled || uploading} onClick={() => inputRef.current?.click()}>
-        <ImagePlus />
-        {uploading ? `Subiendo ${progress.done + 1} de ${progress.total}…` : "Agregar fotos"}
-      </Button>
+      <div className="flex gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          className="flex-1"
+          disabled={disabled || uploading}
+          onClick={() => inputRef.current?.click()}
+        >
+          <ImagePlus />
+          {uploading
+            ? `Subiendo ${Math.min(progress.done + 1, progress.total)} de ${progress.total}… ${progress.percent}%`
+            : "Agregar fotos"}
+        </Button>
+        {uploading && (
+          <Button type="button" variant="ghost" onClick={cancel}>
+            Cancelar
+          </Button>
+        )}
+      </div>
+      {uploading && <Progress value={progress.percent} />}
 
       {photos.length > 0 && (
         <ul className="grid grid-cols-3 gap-2">

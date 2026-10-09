@@ -1,11 +1,12 @@
 "use client";
 
-import { useId, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { TRISTATE_LABELS } from "@/lib/catalogs";
+import { parseDecimal, sanitizeDecimal } from "@/lib/decimal-input";
 import type { TriState } from "@/lib/generated/prisma/enums";
 
 export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
@@ -162,15 +163,25 @@ export function DecimalField({
   onChange: (value: number | null) => void;
   placeholder?: string;
 }) {
+  // The raw text is the source of truth while typing; `value` only wins when it changes from outside
+  // (e.g. the pasted "lat, lng" field), detected by the parsed text no longer matching it.
+  const [text, setText] = useState(value === null ? "" : String(value));
+  if (parseDecimal(text) !== value) setText(value === null ? "" : String(value));
+
   return (
     <Field label={label} hint={hint}>
       <Input
-        type="number"
+        type="text"
         inputMode="decimal"
-        step="any"
+        autoComplete="off"
         placeholder={placeholder}
-        value={value ?? ""}
-        onChange={(event) => onChange(event.target.value === "" ? null : Number(event.target.value))}
+        value={text}
+        onChange={(event) => {
+          const next = sanitizeDecimal(event.target.value);
+          if (next === null) return;
+          setText(next);
+          onChange(parseDecimal(next));
+        }}
         className="h-11"
       />
     </Field>

@@ -17,7 +17,6 @@ export async function authorizeEdit(unitId: string) {
       id: true,
       complexId: true,
       assignedToId: true,
-      campaign: { select: { minPhotos: true } },
       submission: { select: { id: true, status: true, version: true } },
     },
   });

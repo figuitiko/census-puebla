@@ -207,7 +207,7 @@ model Campaign {
   startsOn     DateTime @db.Date
   endsOn       DateTime @db.Date
   timezone     String   @default("America/Mexico_City")
-  minPhotos    Int      @default(10) // valid photos required per located unit
+  minPhotos    Int      @default(10) // DEPRECATED, unused: the MIN_PHOTOS env var replaced it (see lib/campaign-rules.ts)
   createdAt    DateTime @default(now())
 
   units CampaignUnit[]

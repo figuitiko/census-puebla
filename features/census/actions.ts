@@ -136,8 +136,8 @@ export async function submitCedula(unitId: string, expectedVersion: number): Pro
 
   const issues = submitIssues(capture.values);
   // Field 25: a located unit needs the campaign's minimum of confirmed photos. Not-located: optional.
-  // TODO(go-live): campaign.minPhotos may be lowered while testing. Restore it to CONTRACT_MIN_PHOTOS
-  // (lib/campaign-rules.ts) in /admin/campaign before real data; that screen warns while it is lower.
+  // TODO(go-live): MIN_PHOTOS defaults to 1 for testing. Set MIN_PHOTOS=10 (CONTRACT_MIN_PHOTOS in
+  // lib/campaign-rules.ts) in the real environment; /admin/campaign warns while it is lower.
   if (capture.values.located === true && capture.evidence.length < capture.minPhotos) {
     issues.push({
       step: 4,

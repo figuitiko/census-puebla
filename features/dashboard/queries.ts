@@ -1,4 +1,5 @@
 import { getCampaign } from "@/lib/campaign";
+import { getMinPhotos } from "@/lib/campaign-rules";
 import { prisma } from "@/lib/prisma";
 import type { UnitRow } from "./rows";
 
@@ -47,5 +48,5 @@ export async function getCampaignRows() {
     lng: unit.complex.lng?.toNumber() ?? null,
   }));
 
-  return { campaign: { name: campaign.name, minPhotos: campaign.minPhotos }, rows };
+  return { campaign: { name: campaign.name, minPhotos: getMinPhotos() }, rows };
 }

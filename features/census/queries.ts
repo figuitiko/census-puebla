@@ -1,4 +1,5 @@
 import { getCampaign } from "@/lib/campaign";
+import { getMinPhotos } from "@/lib/campaign-rules";
 import type { SessionUser } from "@/lib/dal";
 import type { SubmissionStatus } from "@/lib/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
@@ -51,7 +52,6 @@ export async function getCapture(unitId: string): Promise<CaptureData | null> {
     where: { id: unitId },
     include: {
       complex: true,
-      campaign: { select: { minPhotos: true } },
       submission: {
         include: {
           evidence: {
@@ -111,7 +111,7 @@ export async function getCapture(unitId: string): Promise<CaptureData | null> {
   return {
     unitId: unit.id,
     submissionId: s?.id ?? null,
-    minPhotos: unit.campaign.minPhotos,
+    minPhotos: getMinPhotos(),
     evidence: s?.evidence ?? [],
     folio: unit.folio,
     assignedToId: unit.assignedToId,

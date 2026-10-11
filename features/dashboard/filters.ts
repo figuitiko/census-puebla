@@ -44,6 +44,17 @@ export function parseFilters(params: SearchParams): UnitFilters {
   };
 }
 
+/** Inverse of `parseFilters`: "" when nothing is active, otherwise "?state=...&...". Built from SANITISED filters. */
+export function filtersToQuery(filters: UnitFilters) {
+  const params = new URLSearchParams();
+  if (filters.state) params.set("state", filters.state);
+  if (filters.colonia) params.set("colonia", filters.colonia);
+  if (filters.junta) params.set("junta", filters.junta);
+  if (filters.assignee) params.set("assignee", filters.assignee);
+  if (filters.scope !== "all") params.set("scope", filters.scope);
+  return params.size ? `?${params}` : "";
+}
+
 export function hasActiveFilters(filters: UnitFilters) {
   return Boolean(filters.state || filters.colonia || filters.junta || filters.assignee || filters.scope !== "all");
 }

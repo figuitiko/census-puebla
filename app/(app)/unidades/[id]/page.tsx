@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getCapture } from "@/features/census/queries";
 import { UnitMap } from "@/features/dashboard/components/unit-map-lazy";
@@ -41,6 +43,14 @@ export default async function DossierPage(props: PageProps<"/unidades/[id]">) {
             </p>
           </div>
           <Badge variant={state === "APPROVED" ? "default" : "secondary"}>{STATE_LABELS[state]}</Badge>
+        </div>
+        <div>
+          {/* Plain <a>: a file download, not a page navigation, so no client routing or prefetch. */}
+          <Button asChild variant="outline" size="sm">
+            <a href={`/api/reports/unidades/${capture.unitId}/pdf`} download>
+              <Download /> Descargar PDF
+            </a>
+          </Button>
         </div>
         {awaitingReview && (
           <Link href={`/review/${capture.unitId}`} className="text-sm underline">

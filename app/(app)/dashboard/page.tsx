@@ -1,12 +1,14 @@
+import { Download } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DashboardShell } from "@/features/dashboard/components/dashboard-shell";
 import { RegistryTable } from "@/features/dashboard/components/registry-table";
 import { StatTile, formatPercent } from "@/features/dashboard/components/stat-tile";
 import { StatusChart } from "@/features/dashboard/components/status-chart";
 import { UnitMap } from "@/features/dashboard/components/unit-map-lazy";
-import { parseFilters } from "@/features/dashboard/filters";
+import { filtersToQuery, parseFilters } from "@/features/dashboard/filters";
 import { computeMetrics, stateByAssignee, stateTotals } from "@/features/dashboard/metrics";
 import { getCampaignRows } from "@/features/dashboard/queries";
 import { applyFilters, filterOptions } from "@/features/dashboard/rows";
@@ -29,6 +31,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
 
   const filters = parseFilters(await searchParams);
   const rows = applyFilters(data.rows, filters);
+  const exportQuery = filtersToQuery(filters);
   const { minPhotos } = data.campaign;
   const m = computeMetrics(rows, minPhotos);
 
@@ -108,8 +111,14 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
         </Card>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between gap-3">
             <CardTitle className="text-base">Registro</CardTitle>
+            {/* Same filters as the page, so the file matches what is on screen. */}
+            <Button asChild variant="outline" size="sm">
+              <a href={`/api/reports/registry${exportQuery}`} download>
+                <Download /> Exportar XLSX
+              </a>
+            </Button>
           </CardHeader>
           <CardContent>
             <RegistryTable rows={rows} minPhotos={minPhotos} />

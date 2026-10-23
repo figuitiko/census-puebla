@@ -1,5 +1,5 @@
 import { getCampaign } from "@/lib/campaign";
-import { getMinPhotos } from "@/lib/campaign-rules";
+import { getMaxPhotos, getMinPhotos } from "@/lib/campaign-rules";
 import type { SessionUser } from "@/lib/dal";
 import type { SubmissionStatus } from "@/lib/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
@@ -34,6 +34,7 @@ export type CaptureData = {
   unitId: string;
   submissionId: string | null;
   minPhotos: number;
+  maxPhotos: number;
   evidence: { id: string }[]; // confirmed photos only
   folio: string;
   assignedToId: string | null;
@@ -60,7 +61,6 @@ export async function getCapture(unitId: string): Promise<CaptureData | null> {
             orderBy: { createdAt: "asc" },
           },
           privateUnits: true,
-          equipment: true,
           orgFigures: true,
           author: { select: { name: true } },
           reviews: {
@@ -86,20 +86,15 @@ export async function getCapture(unitId: string): Promise<CaptureData | null> {
   };
 
   if (s) {
-    values.located = s.located;
     values.dwellings = s.dwellings;
     values.otherUnits = s.otherUnits;
     values.privateUnits = Object.fromEntries(
       PRIVATE_UNIT_TYPES.map((type) => [type, s.privateUnits.find((p) => p.type === type)?.quantity ?? null]),
     ) as CedulaValues["privateUnits"];
-    values.privateOtherLabel = s.privateUnits.find((p) => p.type === "OTROS")?.otherLabel ?? "";
     values.greenAreas = s.greenAreas;
     values.greenAreaCount = s.greenAreaCount;
     values.greenType = s.greenType;
-    values.greenUse = s.greenUse;
-    values.equipment = s.equipment.map((e) => e.equipment);
     values.greenCondition = s.greenCondition;
-    values.orgIdentified = s.orgIdentified;
     values.orgFigures = s.orgFigures.map((o) => o.figure);
     values.orgNotes = s.orgNotes ?? "";
     values.source = s.source;
@@ -112,6 +107,7 @@ export async function getCapture(unitId: string): Promise<CaptureData | null> {
     unitId: unit.id,
     submissionId: s?.id ?? null,
     minPhotos: getMinPhotos(),
+    maxPhotos: getMaxPhotos(),
     evidence: s?.evidence ?? [],
     folio: unit.folio,
     assignedToId: unit.assignedToId,

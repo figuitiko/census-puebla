@@ -28,7 +28,7 @@ type Props = {
   submissionId: string | null;
   photos: { id: string }[];
   minPhotos: number;
-  required: boolean;
+  maxPhotos: number;
   disabled: boolean;
   /** Saves the draft so a submission (and its upload prefix) exists. Returns its id, or null on failure. */
   ensureSaved: () => Promise<string | null>;
@@ -36,7 +36,7 @@ type Props = {
   onRemove: (id: string) => void;
 };
 
-export function Photos({ unitId, submissionId, photos, minPhotos, required, disabled, ensureSaved, onAdd, onRemove }: Props) {
+export function Photos({ unitId, submissionId, photos, minPhotos, maxPhotos, disabled, ensureSaved, onAdd, onRemove }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [progress, setProgress] = useState<{ done: number; total: number; percent: number } | null>(null);
   const uploading = progress !== null;
@@ -101,20 +101,18 @@ export function Photos({ unitId, submissionId, photos, minPhotos, required, disa
   }
 
   const enough = photos.length >= minPhotos;
+  const full = photos.length >= maxPhotos;
 
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-medium">25. Evidencia fotográfica</p>
-        <Badge variant={enough || !required ? "default" : "secondary"}>
+        <Badge variant={enough ? "default" : "secondary"}>
           {photos.length}/{minPhotos}
         </Badge>
       </div>
       <p className="text-xs text-muted-foreground">
-        {required
-          ? `Se requieren al menos ${minPhotos} fotos georreferenciadas.`
-          : "Opcional: la unidad no fue localizada."}{" "}
-        Imágenes de hasta 15 MB.
+        Se requieren al menos {minPhotos} fotos georreferenciadas (máximo {maxPhotos}). Imágenes de hasta 15 MB.
       </p>
 
       <input
@@ -134,7 +132,7 @@ export function Photos({ unitId, submissionId, photos, minPhotos, required, disa
           type="button"
           variant="outline"
           className="flex-1"
-          disabled={disabled || uploading}
+          disabled={disabled || uploading || full}
           onClick={() => inputRef.current?.click()}
         >
           <ImagePlus />

@@ -34,5 +34,6 @@ Fresh `create-next-app` scaffold; only `app/` router exists (`layout.tsx`, `page
 
 ## Config (env vars)
 
-- `MIN_PHOTOS`: confirmed photos required per located unit before a cedula can be submitted. Read server-side by `getMinPhotos()` (`lib/campaign-rules.ts`) on every call. **Unset or blank = 1** (testing default). Set `MIN_PHOTOS=10` for real data (the survey requires 10); `/admin/campaign` shows a warning while it is lower. A malformed value throws on purpose. `0` disables the gate. The old `Campaign.minPhotos` column is deprecated and unused.
+- `MIN_PHOTOS`: confirmed photos required per unit before a cedula can be submitted. Read server-side by `getMinPhotos()` (`lib/campaign-rules.ts`) on every call. **Unset or blank = 1** (testing default). Set `MIN_PHOTOS=10` for real data (the survey requires 10); `/admin/campaign` shows a warning while it is lower. A malformed value throws on purpose. `0` disables the gate. The old `Campaign.minPhotos` column is deprecated and unused.
+- `MAX_PHOTOS`: maximum photos per unit, read by `getMaxPhotos()` (same file). **Unset or blank = 50** (loose testing ceiling; the cap is not enabled yet). Set `MAX_PHOTOS=20` for real data (the survey allows 20). A malformed value, or one below `MIN_PHOTOS`, throws on purpose.
 - `NEXT_PUBLIC_BLOB_ACCESS`: `public` only for a public Blob store while testing; unset = `private` (production). Must match the store's mode. Restart `next dev` after changing it.

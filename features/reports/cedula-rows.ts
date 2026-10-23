@@ -1,8 +1,6 @@
 import {
-  EQUIPMENT_LABELS,
   GREEN_CONDITION_LABELS,
   GREEN_TYPE_LABELS,
-  GREEN_USE_LABELS,
   ORG_FIGURE_LABELS,
   PRIVATE_UNIT_LABELS,
   SOURCE_LABELS,
@@ -32,14 +30,12 @@ const list = <T extends string>(labels: Record<T, string>, values: T[]) =>
 
 /**
  * The cedula in workbook order as PLAIN TEXT, shared by the XLSX and the PDF so both always agree.
- * Mirrors `CedulaSummary` (the on-screen version): skipped answers are omitted, and an unlocated unit
- * only gets sections A and E.
+ * Mirrors `CedulaSummary` (the on-screen version): answers hidden by a skip rule are omitted.
  */
 export function cedulaSections(
   v: CedulaValues,
   meta: { folio: string; responsible: string; visitedAt: Date | null },
 ): CedulaSection[] {
-  const located = v.located !== false;
   const total = privateUnitsTotal(v);
   const title = (index: number) => `${STEPS[index].key}. ${STEPS[index].title}`;
 
@@ -52,7 +48,6 @@ export function cedulaSections(
     ["6. Junta auxiliar", text(v.juntaAuxiliar)],
     ["7. Colonia", text(v.colonia)],
     ["8. Domicilio o referencia", text(v.address)],
-    ["9. Localizada", bool(v.located)],
   ];
 
   const b: CedulaRow[] = [
@@ -61,7 +56,6 @@ export function cedulaSections(
     ...(v.otherUnits === "YES"
       ? [
           ...PRIVATE_UNIT_TYPES.map((type): CedulaRow => [`12. ${PRIVATE_UNIT_LABELS[type]}`, num(v.privateUnits[type])]),
-          ...(v.privateOtherLabel ? [["12. «Otros» especifica", v.privateOtherLabel] as CedulaRow] : []),
           ["12. Total", total === null ? `${privateUnitsKnownSum(v)}+ (parcial)` : String(total)] as CedulaRow,
         ]
       : []),
@@ -73,43 +67,28 @@ export function cedulaSections(
       ? ([
           ["14. Número de áreas verdes", num(v.greenAreaCount)],
           ["15. Tipo predominante", pick(GREEN_TYPE_LABELS, v.greenType)],
-          ["16. Uso principal", pick(GREEN_USE_LABELS, v.greenUse)],
-          ["17. Equipamiento", list(EQUIPMENT_LABELS, v.equipment)],
           ["18. Condición general", pick(GREEN_CONDITION_LABELS, v.greenCondition)],
         ] as CedulaRow[])
       : []),
   ];
 
   const d: CedulaRow[] = [
-    ["19. Figura de administración", tri(v.orgIdentified)],
-    ...(v.orgIdentified === "YES"
-      ? ([
-          ["20. Figura(s) identificada(s)", list(ORG_FIGURE_LABELS, v.orgFigures)],
-          ["21. Características / observaciones", text(v.orgNotes)],
-        ] as CedulaRow[])
-      : []),
+    ["20. Figura(s) identificada(s)", list(ORG_FIGURE_LABELS, v.orgFigures)],
+    ["21. Características / observaciones", text(v.orgNotes)],
   ];
 
   const e: CedulaRow[] = [
-    ...(located
-      ? ([
-          ["22. Fuente principal", pick(SOURCE_LABELS, v.source)],
-          ["23. Evidencia documental", bool(v.hasDocEvidence)],
-          ...(v.hasDocEvidence ? ([["24. Tipo de documento", text(v.docType)]] as CedulaRow[]) : []),
-        ] as CedulaRow[])
-      : []),
+    ["22. Fuente principal", pick(SOURCE_LABELS, v.source)],
+    ["23. Evidencia documental", bool(v.hasDocEvidence)],
+    ...(v.hasDocEvidence ? ([["24. Tipo de documento", text(v.docType)]] as CedulaRow[]) : []),
     ["26. Observaciones o incidencias", text(v.observations)],
   ];
 
   return [
     { title: title(0), rows: a },
-    ...(located
-      ? [
-          { title: title(1), rows: b },
-          { title: title(2), rows: c },
-          { title: title(3), rows: d },
-        ]
-      : []),
+    { title: title(1), rows: b },
+    { title: title(2), rows: c },
+    { title: title(3), rows: d },
     { title: title(4), rows: e },
   ];
 }
@@ -142,9 +121,8 @@ export type RegistryColumn = {
 const BLANK = ""; // skipped by the questionnaire's skip rules or not captured yet: NOT the same as NO_DATA
 const nOrNoData = (value: number | null): RegistryCell => (value === null ? NO_DATA : value);
 
-/** Answers that exist only when the unit was located (fields 10-24). */
-const ifLocated = (i: RegistryInput, fn: () => RegistryCell): RegistryCell =>
-  i.started && i.v.located !== false ? fn() : BLANK;
+/** Answers that exist only once a cedula was started (fields 10-24). */
+const ifStarted = (i: RegistryInput, fn: () => RegistryCell): RegistryCell => (i.started ? fn() : BLANK);
 
 const col = (section: number, header: string, width: number, value: RegistryColumn["value"]): RegistryColumn => ({
   section,
@@ -163,18 +141,16 @@ export const REGISTRY_COLUMNS: RegistryColumn[] = [
   col(0, "6. Junta auxiliar", 24, (i) => text(i.v.juntaAuxiliar)),
   col(0, "7. Colonia", 24, (i) => text(i.v.colonia)),
   col(0, "8. Domicilio o referencia", 34, (i) => text(i.v.address)),
-  col(0, "9. Localizada", 12, (i) => (i.started ? bool(i.v.located) : BLANK)),
 
-  col(1, "10. Total de viviendas", 12, (i) => ifLocated(i, () => nOrNoData(i.v.dwellings))),
-  col(1, "11. Otras unidades privativas", 16, (i) => ifLocated(i, () => tri(i.v.otherUnits))),
+  col(1, "10. Total de viviendas", 12, (i) => ifStarted(i, () => nOrNoData(i.v.dwellings))),
+  col(1, "11. Otras unidades privativas", 16, (i) => ifStarted(i, () => tri(i.v.otherUnits))),
   ...PRIVATE_UNIT_TYPES.map((type) =>
     col(1, `12. ${PRIVATE_UNIT_LABELS[type]}`, 14, (i) =>
-      ifLocated(i, () => (i.v.otherUnits === "YES" ? nOrNoData(i.v.privateUnits[type]) : BLANK)),
+      ifStarted(i, () => (i.v.otherUnits === "YES" ? nOrNoData(i.v.privateUnits[type]) : BLANK)),
     ),
   ),
-  col(1, "12. «Otros» especifica", 20, (i) => ifLocated(i, () => (i.v.otherUnits === "YES" ? i.v.privateOtherLabel : BLANK))),
   col(1, "12. Total", 10, (i) =>
-    ifLocated(i, () => {
+    ifStarted(i, () => {
       if (i.v.otherUnits === "NO") return 0; // field 11 = No: total is 0 by rule
       if (i.v.otherUnits !== "YES") return BLANK;
       const total = privateUnitsTotal(i.v);
@@ -182,26 +158,21 @@ export const REGISTRY_COLUMNS: RegistryColumn[] = [
     }),
   ),
 
-  col(2, "13. Áreas verdes", 14, (i) => ifLocated(i, () => tri(i.v.greenAreas))),
+  col(2, "13. Áreas verdes", 14, (i) => ifStarted(i, () => tri(i.v.greenAreas))),
   col(2, "14. Número de áreas verdes", 14, (i) =>
-    ifLocated(i, () => (i.v.greenAreas === "YES" ? nOrNoData(i.v.greenAreaCount) : BLANK)),
+    ifStarted(i, () => (i.v.greenAreas === "YES" ? nOrNoData(i.v.greenAreaCount) : BLANK)),
   ),
-  col(2, "15. Tipo predominante", 20, (i) => ifLocated(i, () => (i.v.greenAreas === "YES" ? pick(GREEN_TYPE_LABELS, i.v.greenType) : BLANK))),
-  col(2, "16. Uso principal", 24, (i) => ifLocated(i, () => (i.v.greenAreas === "YES" ? pick(GREEN_USE_LABELS, i.v.greenUse) : BLANK))),
-  col(2, "17. Equipamiento", 34, (i) => ifLocated(i, () => (i.v.greenAreas === "YES" ? list(EQUIPMENT_LABELS, i.v.equipment) : BLANK))),
+  col(2, "15. Tipo predominante", 20, (i) => ifStarted(i, () => (i.v.greenAreas === "YES" ? pick(GREEN_TYPE_LABELS, i.v.greenType) : BLANK))),
   col(2, "18. Condición general", 18, (i) =>
-    ifLocated(i, () => (i.v.greenAreas === "YES" ? pick(GREEN_CONDITION_LABELS, i.v.greenCondition) : BLANK)),
+    ifStarted(i, () => (i.v.greenAreas === "YES" ? pick(GREEN_CONDITION_LABELS, i.v.greenCondition) : BLANK)),
   ),
 
-  col(3, "19. Figura de administración", 16, (i) => ifLocated(i, () => tri(i.v.orgIdentified))),
-  col(3, "20. Figura(s) identificada(s)", 30, (i) =>
-    ifLocated(i, () => (i.v.orgIdentified === "YES" ? list(ORG_FIGURE_LABELS, i.v.orgFigures) : BLANK)),
-  ),
-  col(3, "21. Características / observaciones", 34, (i) => ifLocated(i, () => (i.v.orgIdentified === "YES" ? text(i.v.orgNotes) : BLANK))),
+  col(3, "20. Figura(s) identificada(s)", 30, (i) => ifStarted(i, () => list(ORG_FIGURE_LABELS, i.v.orgFigures))),
+  col(3, "21. Características / observaciones", 34, (i) => ifStarted(i, () => text(i.v.orgNotes))),
 
-  col(4, "22. Fuente principal", 30, (i) => ifLocated(i, () => pick(SOURCE_LABELS, i.v.source))),
-  col(4, "23. Evidencia documental", 14, (i) => ifLocated(i, () => bool(i.v.hasDocEvidence))),
-  col(4, "24. Tipo de documento", 24, (i) => ifLocated(i, () => (i.v.hasDocEvidence ? text(i.v.docType) : BLANK))),
+  col(4, "22. Fuente principal", 30, (i) => ifStarted(i, () => pick(SOURCE_LABELS, i.v.source))),
+  col(4, "23. Evidencia documental", 14, (i) => ifStarted(i, () => bool(i.v.hasDocEvidence))),
+  col(4, "24. Tipo de documento", 24, (i) => ifStarted(i, () => (i.v.hasDocEvidence ? text(i.v.docType) : BLANK))),
   col(4, "25. Evidencia fotográfica (fotos confirmadas)", 18, (i) => i.photos),
   col(4, "26. Observaciones o incidencias", 40, (i) => (i.started ? text(i.v.observations) : BLANK)),
 ];

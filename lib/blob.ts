@@ -9,7 +9,6 @@ export const BLOB_ACCESS: "public" | "private" = process.env.NEXT_PUBLIC_BLOB_AC
 
 export const EVIDENCE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
 export const MAX_EVIDENCE_BYTES = 15 * 1024 * 1024;
-export const MAX_PHOTOS_PER_SUBMISSION = 50;
 
 export const evidencePrefix = (submissionId: string) => `evidence/${submissionId}/`;
 

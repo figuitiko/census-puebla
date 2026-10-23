@@ -2,7 +2,8 @@
 
 import { del, head } from "@vercel/blob";
 import { authorizeEdit } from "@/features/census/authorize";
-import { EVIDENCE_TYPES, isEvidencePathname, MAX_EVIDENCE_BYTES, MAX_PHOTOS_PER_SUBMISSION } from "@/lib/blob";
+import { EVIDENCE_TYPES, isEvidencePathname, MAX_EVIDENCE_BYTES } from "@/lib/blob";
+import { getMaxPhotos } from "@/lib/campaign-rules";
 import { prisma } from "@/lib/prisma";
 
 export type EvidenceResult = { ok: true; id: string } | { ok: false; error: string };
@@ -32,10 +33,11 @@ export async function confirmEvidence(unitId: string, pathname: string): Promise
     return { ok: false, error: "Archivo no permitido (solo imágenes de hasta 15 MB)" };
   }
 
+  const maxPhotos = getMaxPhotos();
   const count = await prisma.evidence.count({ where: { submissionId: submission.id } });
-  if (count >= MAX_PHOTOS_PER_SUBMISSION) {
+  if (count >= maxPhotos) {
     await del(pathname).catch(() => {});
-    return { ok: false, error: `Máximo ${MAX_PHOTOS_PER_SUBMISSION} fotos por cédula` };
+    return { ok: false, error: `Máximo ${maxPhotos} fotos por cédula` };
   }
 
   const evidence = await prisma.evidence.upsert({

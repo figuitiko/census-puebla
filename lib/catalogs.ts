@@ -1,8 +1,6 @@
 import type {
-  Equipment,
   GreenAreaCondition,
   GreenAreaType,
-  GreenAreaUse,
   InfoSource,
   OrganizationFigure,
   PrivateUnitType,
@@ -21,34 +19,11 @@ export const TRISTATE_LABELS: Record<TriState, string> = {
 export const PRIVATE_UNIT_LABELS: Record<PrivateUnitType, string> = {
   LOCAL_COMERCIAL: "Local comercial",
   OFICINAS: "Oficinas",
-  CONSULTORIOS: "Consultorios",
-  OTROS: "Otros",
 };
 
 export const GREEN_TYPE_LABELS: Record<GreenAreaType, string> = {
   JARDIN: "Jardín",
-  PARQUE: "Parque",
   CAMELLON: "Camellón",
-  OTRA_AREA_VERDE: "Otra área verde",
-};
-
-export const GREEN_USE_LABELS: Record<GreenAreaUse, string> = {
-  RECREACION: "Recreación",
-  DESCANSO_CONVIVENCIA: "Descanso y convivencia",
-  JUEGO_INFANTIL: "Juego infantil",
-  ACTIVIDAD_FISICA_DEPORTIVA: "Actividad física o deportiva",
-  ORNAMENTAL: "Ornamental",
-  CONSERVACION_AMBIENTAL: "Conservación / ambiental",
-  OTRO: "Otro",
-};
-
-export const EQUIPMENT_LABELS: Record<Equipment, string> = {
-  NINGUNO: "Ninguno",
-  BANCAS_MOBILIARIO_DESCANSO: "Bancas o mobiliario de descanso",
-  JUEGOS_INFANTILES: "Juegos infantiles",
-  EQUIPAMIENTO_DEPORTIVO: "Equipamiento deportivo",
-  SENDEROS: "Senderos",
-  OTRO: "Otro",
 };
 
 export const GREEN_CONDITION_LABELS: Record<GreenAreaCondition, string> = {

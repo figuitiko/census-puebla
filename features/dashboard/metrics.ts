@@ -16,11 +16,11 @@ export type Metrics = {
   coverage: { done: number; of: number; value: number | null };
   /** APPROVED over everything ever submitted (SUBMITTED, APPROVED, RETURNED). */
   approval: { done: number; of: number; value: number | null };
-  /** Ready = APPROVED + located + enough confirmed photos + coordinates. Over APPROVED located units. */
+  /** Ready = APPROVED + enough confirmed photos + coordinates. Over APPROVED units. */
   readiness: { done: number; of: number; value: number | null };
-  /** Dwellings reported by SUBMITTED/APPROVED located units. Unknowns are excluded from the sum and counted apart. */
+  /** Dwellings reported by SUBMITTED/APPROVED units. Unknowns (legacy drafts) are excluded from the sum and counted apart. */
   dwellings: { known: number; unknownUnits: number; reportedUnits: number };
-  /** Confirmed photos (capped at the minimum per unit) over minPhotos x located units. */
+  /** Confirmed photos (capped at the minimum per unit) over minPhotos x started units. */
   photos: { done: number; of: number; value: number | null };
 };
 
@@ -30,15 +30,14 @@ export function computeMetrics(rows: UnitRow[], minPhotos: number): Metrics {
 
   const submittedOrLater = rows.filter((r) => SUBMITTED_OR_LATER.includes(r.state)).length;
   const approved = rows.filter((r) => r.state === "APPROVED");
-  const approvedLocated = approved.filter((r) => r.located === true);
-  const ready = approvedLocated.filter((r) => r.photos >= minPhotos && r.lat !== null && r.lng !== null).length;
+  const ready = approved.filter((r) => r.photos >= minPhotos && r.lat !== null && r.lng !== null).length;
 
-  const reported = rows.filter((r) => COVERED.includes(r.state) && r.located === true);
+  const reported = rows.filter((r) => COVERED.includes(r.state));
   const known = reported.filter((r) => r.dwellings !== null);
 
-  const located = rows.filter((r) => r.located === true);
-  const photosDone = sum(located.map((r) => Math.min(r.photos, minPhotos)));
-  const photosOf = minPhotos * located.length;
+  const started = rows.filter((r) => r.state !== "NOT_STARTED");
+  const photosDone = sum(started.map((r) => Math.min(r.photos, minPhotos)));
+  const photosOf = minPhotos * started.length;
 
   return {
     total: rows.length,
@@ -46,7 +45,7 @@ export function computeMetrics(rows: UnitRow[], minPhotos: number): Metrics {
     discovered: rows.length - inScope.length,
     coverage: { done: covered, of: inScope.length, value: ratio(covered, inScope.length) },
     approval: { done: approved.length, of: submittedOrLater, value: ratio(approved.length, submittedOrLater) },
-    readiness: { done: ready, of: approvedLocated.length, value: ratio(ready, approvedLocated.length) },
+    readiness: { done: ready, of: approved.length, value: ratio(ready, approved.length) },
     dwellings: {
       known: sum(known.map((r) => r.dwellings ?? 0)),
       unknownUnits: reported.length - known.length,

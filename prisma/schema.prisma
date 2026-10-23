@@ -56,8 +56,8 @@ enum EvidenceStatus {
   CONFIRMED // verified server-side (Blob head()), counts as a valid photo
 }
 
-// Fields 11, 13, 19: Si / No / No fue posible determinar
-// (fields 9 and 23 are plain Boolean: workbook allows Si/No only)
+// Fields 11, 13: Si / No / No fue posible determinar
+// (field 23 is a plain Boolean: workbook allows Si/No only)
 enum TriState {
   YES
   NO
@@ -70,37 +70,12 @@ enum TriState {
 enum PrivateUnitType {
   LOCAL_COMERCIAL
   OFICINAS
-  CONSULTORIOS
-  OTROS
 }
 
-// Catalogos col D (field 15)
+// Catalogos col D (field 15). Authors kept only Jardin and Camellon.
 enum GreenAreaType {
   JARDIN
-  PARQUE
   CAMELLON
-  OTRA_AREA_VERDE
-}
-
-// Catalogos col E (field 16)
-enum GreenAreaUse {
-  RECREACION
-  DESCANSO_CONVIVENCIA
-  JUEGO_INFANTIL
-  ACTIVIDAD_FISICA_DEPORTIVA
-  ORNAMENTAL
-  CONSERVACION_AMBIENTAL
-  OTRO
-}
-
-// Catalogos col F (field 17, multi-select per Instrucciones A6)
-enum Equipment {
-  NINGUNO
-  BANCAS_MOBILIARIO_DESCANSO
-  JUEGOS_INFANTILES
-  EQUIPAMIENTO_DEPORTIVO
-  SENDEROS
-  OTRO
 }
 
 // Catalogos col G (field 18)
@@ -258,20 +233,17 @@ model CensusSubmission {
   version  Int              @default(1)
 
   visitedAt DateTime? // field 2
-  located   Boolean? // field 9 (Si/No). false => only section A, field 26 and photos required
 
-  dwellings  Int? // field 10 (null = unknown)
+  dwellings  Int? // field 10 (required on submit; nullable only while drafting)
   otherUnits TriState? // field 11
   // field 12 total is DERIVED: 0 if otherUnits = NO, null if any count is null. Never stored.
 
   greenAreas     TriState? // field 13
   greenAreaCount Int? // field 14
   greenType      GreenAreaType? // field 15
-  greenUse       GreenAreaUse? // field 16
   greenCondition GreenAreaCondition? // field 18
 
-  orgIdentified TriState? // field 19
-  orgNotes      String? // field 21
+  orgNotes String? // field 21
 
   source         InfoSource? // field 22
   hasDocEvidence Boolean? // field 23 (Si/No)
@@ -286,7 +258,6 @@ model CensusSubmission {
   unit         CampaignUnit            @relation(fields: [unitId], references: [id], onDelete: Cascade)
   author       User                    @relation("SubmissionAuthor", fields: [authorId], references: [id], onDelete: Restrict)
   privateUnits PrivateUnitCount[]
-  equipment    EquipmentSelection[]
   orgFigures   OrganizationSelection[]
   evidence     Evidence[]
   reviews      Review[]
@@ -301,22 +272,10 @@ model PrivateUnitCount {
   submissionId String
   type         PrivateUnitType
   quantity     Int?
-  otherLabel   String? // only for OTROS
 
   submission CensusSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
 
   @@unique([submissionId, type])
-}
-
-/// Field 17 (multi-select)
-model EquipmentSelection {
-  id           String    @id @default(cuid())
-  submissionId String
-  equipment    Equipment
-
-  submission CensusSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-
-  @@unique([submissionId, equipment])
 }
 
 /// Field 20 (multi-select, catalog H2:H5)

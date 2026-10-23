@@ -44,7 +44,7 @@ export function RegistryTable({ rows, minPhotos }: { rows: UnitRow[]; minPhotos:
               </span>
             </TableCell>
             <TableCell className="text-right tabular-nums">
-              {row.located === true ? `${row.photos}/${minPhotos}` : "—"}
+              {row.state !== "NOT_STARTED" ? `${row.photos}/${minPhotos}` : "—"}
             </TableCell>
             <TableCell className="text-right tabular-nums">{row.dwellings ?? "—"}</TableCell>
           </TableRow>

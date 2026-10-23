@@ -9,7 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { STATUS_LABELS } from "@/lib/catalogs";
 import type { SubmissionStatus } from "@/lib/generated/prisma/enums";
 import { saveCedula, submitCedula } from "../actions";
-import { NOT_LOCATED_STEPS, STEPS, type CedulaValues, type Issue } from "../schema";
+import { STEPS, type CedulaValues, type Issue } from "../schema";
 import { Photos } from "./photos";
 import { SectionA, SectionB, SectionC, SectionD, SectionE } from "./sections";
 
@@ -21,6 +21,7 @@ type Props = {
   initialSubmissionId: string | null;
   initialPhotos: { id: string }[];
   minPhotos: number;
+  maxPhotos: number;
   returnNote: { comment: string; reviewerName: string } | null;
   initialValues: CedulaValues;
   visitedAt: string | null;
@@ -28,7 +29,7 @@ type Props = {
   readOnly: boolean;
 };
 
-const ALL_STEPS = [0, 1, 2, 3, 4];
+const VISIBLE_STEPS = [0, 1, 2, 3, 4];
 
 export function Wizard({
   unitId,
@@ -38,6 +39,7 @@ export function Wizard({
   initialSubmissionId,
   initialPhotos,
   minPhotos,
+  maxPhotos,
   returnNote,
   initialValues,
   visitedAt,
@@ -53,7 +55,7 @@ export function Wizard({
   const [busy, setBusy] = useState(false);
   const [issues, setIssues] = useState<Issue[]>([]);
 
-  const visible: readonly number[] = values.located === false ? NOT_LOCATED_STEPS : ALL_STEPS;
+  const visible: readonly number[] = VISIBLE_STEPS;
   const step = visible[Math.min(position, visible.length - 1)];
   const isLast = position >= visible.length - 1;
 
@@ -180,7 +182,7 @@ export function Wizard({
                 submissionId={submissionId}
                 photos={photos}
                 minPhotos={minPhotos}
-                required={values.located !== false}
+                maxPhotos={maxPhotos}
                 disabled={readOnly || busy}
                 ensureSaved={ensureSaved}
                 onAdd={(id) => setPhotos((current) => [...current, { id }])}

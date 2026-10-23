@@ -25,6 +25,7 @@ export default async function CapturePage(props: PageProps<"/campo/[unitId]">) {
       initialSubmissionId={capture.submissionId}
       initialPhotos={capture.evidence}
       minPhotos={capture.minPhotos}
+      maxPhotos={capture.maxPhotos}
       returnNote={
         capture.latestReview?.decision === "RETURNED" && capture.latestReview.comment
           ? { comment: capture.latestReview.comment, reviewerName: capture.latestReview.reviewerName }

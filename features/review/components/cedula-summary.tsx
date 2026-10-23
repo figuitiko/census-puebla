@@ -1,10 +1,8 @@
 import type { ReactNode } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  EQUIPMENT_LABELS,
   GREEN_CONDITION_LABELS,
   GREEN_TYPE_LABELS,
-  GREEN_USE_LABELS,
   ORG_FIGURE_LABELS,
   PRIVATE_UNIT_LABELS,
   SOURCE_LABELS,
@@ -65,7 +63,6 @@ export function CedulaSummary({
   responsible: string;
   visitedAt: Date | null;
 }) {
-  const located = v.located !== false;
   const total = privateUnitsTotal(v);
 
   const rowsA: Row[] = [
@@ -77,7 +74,6 @@ export function CedulaSummary({
     ["6. Junta auxiliar", text(v.juntaAuxiliar)],
     ["7. Colonia", text(v.colonia)],
     ["8. Domicilio o referencia", text(v.address)],
-    ["9. Localizada", bool(v.located)],
   ];
 
   const rowsB: Row[] = [
@@ -86,7 +82,6 @@ export function CedulaSummary({
     ...(v.otherUnits === "YES"
       ? ([
           ...PRIVATE_UNIT_TYPES.map((type): Row => [`12. ${PRIVATE_UNIT_LABELS[type]}`, num(v.privateUnits[type])]),
-          ...(v.privateOtherLabel ? ([["12. «Otros» especifica", v.privateOtherLabel]] as Row[]) : []),
           ["12. Total", total ?? `${privateUnitsKnownSum(v)}+ (parcial)`],
         ] as Row[])
       : []),
@@ -98,44 +93,29 @@ export function CedulaSummary({
       ? ([
           ["14. Número de áreas verdes", num(v.greenAreaCount)],
           ["15. Tipo predominante", pick(GREEN_TYPE_LABELS, v.greenType)],
-          ["16. Uso principal", pick(GREEN_USE_LABELS, v.greenUse)],
-          ["17. Equipamiento", list(EQUIPMENT_LABELS, v.equipment)],
           ["18. Condición general", pick(GREEN_CONDITION_LABELS, v.greenCondition)],
         ] as Row[])
       : []),
   ];
 
   const rowsD: Row[] = [
-    ["19. Figura de administración", tri(v.orgIdentified)],
-    ...(v.orgIdentified === "YES"
-      ? ([
-          ["20. Figura(s) identificada(s)", list(ORG_FIGURE_LABELS, v.orgFigures)],
-          ["21. Características / observaciones", text(v.orgNotes)],
-        ] as Row[])
-      : []),
+    ["20. Figura(s) identificada(s)", list(ORG_FIGURE_LABELS, v.orgFigures)],
+    ["21. Características / observaciones", text(v.orgNotes)],
   ];
 
   const rowsE: Row[] = [
-    ...(located
-      ? ([
-          ["22. Fuente principal", pick(SOURCE_LABELS, v.source)],
-          ["23. Evidencia documental", bool(v.hasDocEvidence)],
-          ...(v.hasDocEvidence ? ([["24. Tipo de documento", text(v.docType)]] as Row[]) : []),
-        ] as Row[])
-      : []),
+    ["22. Fuente principal", pick(SOURCE_LABELS, v.source)],
+    ["23. Evidencia documental", bool(v.hasDocEvidence)],
+    ...(v.hasDocEvidence ? ([["24. Tipo de documento", text(v.docType)]] as Row[]) : []),
     ["26. Observaciones o incidencias", text(v.observations)],
   ];
 
   return (
     <div className="flex flex-col gap-4">
       <Section index={0} rows={rowsA} />
-      {located && (
-        <>
-          <Section index={1} rows={rowsB} />
-          <Section index={2} rows={rowsC} />
-          <Section index={3} rows={rowsD} />
-        </>
-      )}
+      <Section index={1} rows={rowsB} />
+      <Section index={2} rows={rowsC} />
+      <Section index={3} rows={rowsD} />
       <Section index={4} rows={rowsE} />
     </div>
   );

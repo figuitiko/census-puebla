@@ -1,7 +1,8 @@
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { authorizeEdit } from "@/features/census/authorize";
 import { assertBlobStore } from "@/lib/blob-health";
-import { EVIDENCE_TYPES, isEvidencePathname, MAX_EVIDENCE_BYTES, MAX_PHOTOS_PER_SUBMISSION } from "@/lib/blob";
+import { EVIDENCE_TYPES, isEvidencePathname, MAX_EVIDENCE_BYTES } from "@/lib/blob";
+import { getMaxPhotos } from "@/lib/campaign-rules";
 import { prisma } from "@/lib/prisma";
 
 function unitIdFrom(clientPayload: string | null) {
@@ -33,9 +34,10 @@ export async function POST(request: Request) {
         if (!submission) throw new Error("Guardá la cédula antes de subir fotos");
         if (!isEvidencePathname(submission.id, pathname)) throw new Error("Ruta de archivo inválida");
 
+        const maxPhotos = getMaxPhotos();
         const count = await prisma.evidence.count({ where: { submissionId: submission.id } });
-        if (count >= MAX_PHOTOS_PER_SUBMISSION) {
-          throw new Error(`Máximo ${MAX_PHOTOS_PER_SUBMISSION} fotos por cédula`);
+        if (count >= maxPhotos) {
+          throw new Error(`Máximo ${maxPhotos} fotos por cédula`);
         }
 
         return {

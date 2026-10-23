@@ -3,10 +3,8 @@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  EQUIPMENT_LABELS,
   GREEN_CONDITION_LABELS,
   GREEN_TYPE_LABELS,
-  GREEN_USE_LABELS,
   ORG_FIGURE_LABELS,
   PRIVATE_UNIT_LABELS,
   SOURCE_LABELS,
@@ -110,18 +108,6 @@ export function SectionA({
       <TextField label="6. Junta auxiliar" value={values.juntaAuxiliar} maxLength={120} onChange={(v) => set("juntaAuxiliar", v)} />
       <TextField label="7. Colonia" value={values.colonia} maxLength={120} onChange={(v) => set("colonia", v)} />
       <TextField label="8. Domicilio o referencia" value={values.address} maxLength={300} onChange={(v) => set("address", v)} />
-
-      <YesNoField
-        label="9. ¿La unidad habitacional fue localizada?"
-        value={values.located}
-        onChange={(v) => set("located", v)}
-      />
-      {values.located === false && (
-        <Note>
-          Si la respuesta es «No», registrá la incidencia y finalizá la cédula: solo se piden esta sección y las
-          observaciones. Las respuestas de las secciones B a E se descartan al guardar.
-        </Note>
-      )}
     </div>
   );
 }
@@ -134,7 +120,7 @@ export function SectionB({ values, set }: SectionProps) {
     <div className="flex flex-col gap-5">
       <CountField
         label="10. Total de viviendas"
-        hint="Dejalo vacío si no se sabe."
+        hint="Obligatorio."
         value={values.dwellings}
         onChange={(v) => set("dwellings", v)}
       />
@@ -156,12 +142,6 @@ export function SectionB({ values, set }: SectionProps) {
               onChange={(v) => set("privateUnits", { ...values.privateUnits, [type]: v })}
             />
           ))}
-          <TextField
-            label="Especificá «Otros»"
-            value={values.privateOtherLabel}
-            maxLength={120}
-            onChange={(v) => set("privateOtherLabel", v)}
-          />
           <p className="text-sm">
             Total: <span className="font-semibold">{total ?? `${known}+ (parcial)`}</span>
           </p>
@@ -185,15 +165,6 @@ export function SectionC({ values, set }: SectionProps) {
         <>
           <CountField label="14. Número de áreas verdes" value={values.greenAreaCount} onChange={(v) => set("greenAreaCount", v)} />
           <ChoiceField label="15. Tipo predominante" options={GREEN_TYPE_LABELS} value={values.greenType} onChange={(v) => set("greenType", v)} />
-          <ChoiceField label="16. Uso principal" options={GREEN_USE_LABELS} value={values.greenUse} onChange={(v) => set("greenUse", v)} />
-          <MultiField
-            label="17. Equipamiento"
-            hint="Podés marcar varios. «Ninguno» excluye al resto."
-            options={EQUIPMENT_LABELS}
-            values={values.equipment}
-            exclusive="NINGUNO"
-            onChange={(v) => set("equipment", v)}
-          />
           <ChoiceField
             label="18. Condición general"
             options={GREEN_CONDITION_LABELS}
@@ -202,9 +173,9 @@ export function SectionC({ values, set }: SectionProps) {
           />
         </>
       )}
-      {values.greenAreas === "NO" && <Note>Sin áreas verdes: se omiten los campos 14 a 18.</Note>}
+      {values.greenAreas === "NO" && <Note>Sin áreas verdes: se omiten los campos 14, 15 y 18.</Note>}
       {values.greenAreas === "UNDETERMINED" && (
-        <Note>Sin poder determinarlo, no se describen las áreas verdes (campos 14 a 18).</Note>
+        <Note>Sin poder determinarlo, no se describen las áreas verdes (campos 14, 15 y 18).</Note>
       )}
     </div>
   );
@@ -213,71 +184,49 @@ export function SectionC({ values, set }: SectionProps) {
 export function SectionD({ values, set }: SectionProps) {
   return (
     <div className="flex flex-col gap-5">
-      <TriStateField
-        label="19. ¿Se identifica una figura de administración?"
-        value={values.orgIdentified}
-        onChange={(v) => set("orgIdentified", v)}
+      <MultiField
+        label="20. Figura(s) identificada(s)"
+        options={ORG_FIGURE_LABELS}
+        values={values.orgFigures}
+        onChange={(v) => set("orgFigures", v)}
       />
-
-      {values.orgIdentified === "YES" && (
-        <>
-          <MultiField
-            label="20. Figura(s) identificada(s)"
-            options={ORG_FIGURE_LABELS}
-            values={values.orgFigures}
-            onChange={(v) => set("orgFigures", v)}
-          />
-          <Field label="21. Características / observaciones">
-            <Textarea
-              value={values.orgNotes}
-              maxLength={1000}
-              rows={4}
-              onChange={(event) => set("orgNotes", event.target.value)}
-            />
-          </Field>
-        </>
-      )}
-      {values.orgIdentified !== null && values.orgIdentified !== "YES" && (
-        <Note>Se omiten los campos 20 y 21.</Note>
-      )}
+      <Field label="21. Características / observaciones">
+        <Textarea
+          value={values.orgNotes}
+          maxLength={1000}
+          rows={4}
+          onChange={(event) => set("orgNotes", event.target.value)}
+        />
+      </Field>
     </div>
   );
 }
 
 export function SectionE({ values, set, photos }: SectionProps & { photos: React.ReactNode }) {
-  const located = values.located !== false;
-
   return (
     <div className="flex flex-col gap-5">
-      {located && (
-        <>
-          <ChoiceField
-            label="22. Fuente principal de la información"
-            options={SOURCE_LABELS}
-            value={values.source}
-            onChange={(v) => set("source", v)}
-          />
-          <YesNoField
-            label="23. ¿Existe evidencia documental?"
-            value={values.hasDocEvidence}
-            onChange={(v) => set("hasDocEvidence", v)}
-          />
-          {values.hasDocEvidence === true && (
-            <TextField
-              label="24. Tipo de documento"
-              hint="Especificá cuál."
-              value={values.docType}
-              maxLength={200}
-              onChange={(v) => set("docType", v)}
-            />
-          )}
-        </>
+      <ChoiceField
+        label="22. Fuente principal de la información"
+        options={SOURCE_LABELS}
+        value={values.source}
+        onChange={(v) => set("source", v)}
+      />
+      <YesNoField
+        label="23. ¿Existe evidencia documental?"
+        value={values.hasDocEvidence}
+        onChange={(v) => set("hasDocEvidence", v)}
+      />
+      {values.hasDocEvidence === true && (
+        <TextField
+          label="24. Tipo de documento"
+          hint="Especificá cuál."
+          value={values.docType}
+          maxLength={200}
+          onChange={(v) => set("docType", v)}
+        />
       )}
       {photos}
-      <Field
-        label="26. Observaciones o incidencias"
-        hint={values.located === false ? "Obligatorio: registrá por qué no se localizó." : undefined}
-      >
+      <Field label="26. Observaciones o incidencias">
         <Textarea
           value={values.observations}
           maxLength={2000}

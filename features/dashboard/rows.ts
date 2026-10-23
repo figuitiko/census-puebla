@@ -10,7 +10,6 @@ export type UnitRow = {
   assigneeId: string | null;
   assigneeName: string | null;
   state: UnitState;
-  located: boolean | null;
   dwellings: number | null;
   /** confirmed photos */
   photos: number;

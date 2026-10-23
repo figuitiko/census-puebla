@@ -22,7 +22,6 @@ export async function getCampaignRows() {
       submission: {
         select: {
           status: true,
-          located: true,
           dwellings: true,
           _count: { select: { evidence: { where: { kind: "PHOTO", status: "CONFIRMED" } } } },
         },
@@ -41,7 +40,6 @@ export async function getCampaignRows() {
     assigneeId: unit.assignedTo?.id ?? null,
     assigneeName: unit.assignedTo?.name ?? null,
     state: unit.submission?.status ?? "NOT_STARTED",
-    located: unit.submission?.located ?? null,
     dwellings: unit.submission?.dwellings ?? null,
     photos: unit.submission?._count.evidence ?? 0,
     lat: unit.complex.lat?.toNumber() ?? null,

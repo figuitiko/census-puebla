@@ -14,15 +14,12 @@ const CONFLICT = "Esta cédula cambió desde que la abriste. Recargá la página
 
 function submissionData(v: CedulaValues) {
   return {
-    located: v.located,
     dwellings: v.dwellings,
     otherUnits: v.otherUnits,
     greenAreas: v.greenAreas,
     greenAreaCount: v.greenAreaCount,
     greenType: v.greenType,
-    greenUse: v.greenUse,
     greenCondition: v.greenCondition,
-    orgIdentified: v.orgIdentified,
     orgNotes: v.orgNotes || null,
     source: v.source,
     hasDocEvidence: v.hasDocEvidence,
@@ -85,7 +82,6 @@ export async function saveCedula(
       }
 
       await tx.privateUnitCount.deleteMany({ where: { submissionId } });
-      await tx.equipmentSelection.deleteMany({ where: { submissionId } });
       await tx.organizationSelection.deleteMany({ where: { submissionId } });
 
       if (v.otherUnits === "YES") {
@@ -94,13 +90,9 @@ export async function saveCedula(
             submissionId,
             type: type as keyof typeof v.privateUnits,
             quantity,
-            otherLabel: type === "OTROS" ? v.privateOtherLabel || null : null,
           })),
         });
       }
-      await tx.equipmentSelection.createMany({
-        data: v.equipment.map((equipment) => ({ submissionId, equipment })),
-      });
       await tx.organizationSelection.createMany({
         data: v.orgFigures.map((figure) => ({ submissionId, figure })),
       });
@@ -135,10 +127,10 @@ export async function submitCedula(unitId: string, expectedVersion: number): Pro
   if (!capture) return { ok: false, error: "Unidad no encontrada" };
 
   const issues = submitIssues(capture.values);
-  // Field 25: a located unit needs the campaign's minimum of confirmed photos. Not-located: optional.
+  // Field 25: every unit needs the minimum of confirmed photos.
   // TODO(go-live): MIN_PHOTOS defaults to 1 for testing. Set MIN_PHOTOS=10 (CONTRACT_MIN_PHOTOS in
   // lib/campaign-rules.ts) in the real environment; /admin/campaign warns while it is lower.
-  if (capture.values.located === true && capture.evidence.length < capture.minPhotos) {
+  if (capture.evidence.length < capture.minPhotos) {
     issues.push({
       step: 4,
       message: `25. Cargá al menos ${capture.minPhotos} fotos (tenés ${capture.evidence.length})`,

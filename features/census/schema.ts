@@ -1,9 +1,7 @@
 import { z } from "zod";
 import {
-  Equipment,
   GreenAreaCondition,
   GreenAreaType,
-  GreenAreaUse,
   InfoSource,
   OrganizationFigure,
   PrivateUnitType,
@@ -18,9 +16,6 @@ export const STEPS = [
   { key: "D", title: "Organización y administración condominal" },
   { key: "E", title: "Fuente y evidencias" },
 ] as const;
-
-/** A not-located unit only needs section A and field 26 (in section E). */
-export const NOT_LOCATED_STEPS = [0, 4] as const;
 
 const count = z.number().int().min(0).max(1_000_000).nullable();
 const text = (max: number) => z.string().trim().max(max);
@@ -46,29 +41,22 @@ export const cedulaSchema = z.object({
     .min(LNG_RANGE.min, { error: (issue) => `Longitud fuera de México (recibí ${issue.input})` })
     .max(LNG_RANGE.max, { error: (issue) => `Longitud fuera de México (recibí ${issue.input})` })
     .nullable(), // 4
-  located: z.boolean().nullable(), // 9
 
   // B. Viviendas y unidades privativas
-  dwellings: count, // 10 (null = unknown)
+  dwellings: count, // 10 (null while drafting, required to submit)
   otherUnits: triState, // 11
   privateUnits: z.object({
     LOCAL_COMERCIAL: count,
     OFICINAS: count,
-    CONSULTORIOS: count,
-    OTROS: count,
   }), // 12
-  privateOtherLabel: text(120), // 12, only for OTROS
 
   // C. Áreas verdes
   greenAreas: triState, // 13
   greenAreaCount: count, // 14
   greenType: z.enum(GreenAreaType).nullable(), // 15
-  greenUse: z.enum(GreenAreaUse).nullable(), // 16
-  equipment: z.array(z.enum(Equipment)), // 17
-  greenCondition: z.enum(GreenAreaCondition).nullable(), // 18
+  greenCondition: z.enum(GreenAreaCondition).nullable(), // 18 (shown right after 15)
 
   // D. Organización y administración condominal
-  orgIdentified: triState, // 19
   orgFigures: z.array(z.enum(OrganizationFigure)), // 20
   orgNotes: text(1000), // 21
 
@@ -109,48 +97,26 @@ export function coordinateHint(lat: number | null, lng: number | null): string |
 const NO_PRIVATE_UNITS: CedulaValues["privateUnits"] = {
   LOCAL_COMERCIAL: null,
   OFICINAS: null,
-  CONSULTORIOS: null,
-  OTROS: null,
 };
 
 /**
- * Applies the workbook skip rules so hidden answers never persist:
- * 9=No keeps only A and 26; 11!=Si drops 12; 13!=Si drops 14-18; 19!=Si drops 20-21; 23!=Si drops 24.
- * "Ninguno" in field 17 is exclusive.
+ * Applies the skip rules so hidden answers never persist:
+ * 11!=Si drops 12; 13!=Si drops 14, 15 and 18; 23!=Si drops 24.
  */
 export function normalize(values: CedulaValues): CedulaValues {
   const next: CedulaValues = {
     ...values,
     privateUnits: { ...values.privateUnits },
-    equipment: [...values.equipment],
     orgFigures: [...values.orgFigures],
   };
 
-  if (next.located === false) {
-    next.dwellings = null;
-    next.otherUnits = null;
-    next.greenAreas = null;
-    next.orgIdentified = null;
-    next.source = null;
-    next.hasDocEvidence = null;
-  }
-  if (next.otherUnits !== "YES") {
-    next.privateUnits = { ...NO_PRIVATE_UNITS };
-    next.privateOtherLabel = "";
-  }
+  if (next.otherUnits !== "YES") next.privateUnits = { ...NO_PRIVATE_UNITS };
   if (next.greenAreas !== "YES") {
     next.greenAreaCount = null;
     next.greenType = null;
-    next.greenUse = null;
-    next.equipment = [];
     next.greenCondition = null;
   }
-  if (next.orgIdentified !== "YES") {
-    next.orgFigures = [];
-    next.orgNotes = "";
-  }
   if (next.hasDocEvidence !== true) next.docType = "";
-  if (next.equipment.includes("NINGUNO")) next.equipment = ["NINGUNO"];
 
   return next;
 }
@@ -179,31 +145,19 @@ export function submitIssues(raw: CedulaValues): Issue[] {
     if (!ok) issues.push({ step, message });
   };
 
-  need(v.located !== null, 0, "9. Indicá si la unidad habitacional fue localizada");
-  if (v.located === null) return issues;
-
-  if (v.located === false) {
-    need(v.observations.length > 0, 4, "26. Registrá la incidencia en observaciones");
-    return issues;
-  }
-
   need(v.lat !== null && v.lng !== null, 0, "4. Capturá las coordenadas (latitud y longitud)");
 
+  need(v.dwellings !== null, 1, "10. Indicá el total de viviendas");
   need(v.otherUnits !== null, 1, "11. Indicá si hay otras unidades privativas");
 
   need(v.greenAreas !== null, 2, "13. Indicá si hay áreas verdes");
   if (v.greenAreas === "YES") {
     need(v.greenAreaCount !== null, 2, "14. Indicá el número de áreas verdes");
     need(v.greenType !== null, 2, "15. Seleccioná el tipo predominante");
-    need(v.greenUse !== null, 2, "16. Seleccioná el uso principal");
-    need(v.equipment.length > 0, 2, "17. Seleccioná el equipamiento (o «Ninguno»)");
     need(v.greenCondition !== null, 2, "18. Seleccioná la condición general");
   }
 
-  need(v.orgIdentified !== null, 3, "19. Indicá si hay figura de administración");
-  if (v.orgIdentified === "YES") {
-    need(v.orgFigures.length > 0, 3, "20. Seleccioná al menos una figura identificada");
-  }
+  need(v.orgFigures.length > 0, 3, "20. Seleccioná al menos una figura identificada");
 
   need(v.source !== null, 4, "22. Seleccioná la fuente principal");
   need(v.hasDocEvidence !== null, 4, "23. Indicá si hay evidencia documental");
@@ -219,18 +173,13 @@ export const EMPTY_VALUES: CedulaValues = {
   address: "",
   lat: null,
   lng: null,
-  located: null,
   dwellings: null,
   otherUnits: null,
   privateUnits: { ...NO_PRIVATE_UNITS },
-  privateOtherLabel: "",
   greenAreas: null,
   greenAreaCount: null,
   greenType: null,
-  greenUse: null,
-  equipment: [],
   greenCondition: null,
-  orgIdentified: null,
   orgFigures: [],
   orgNotes: "",
   source: null,

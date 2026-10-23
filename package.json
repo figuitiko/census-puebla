@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed:admin": "tsx --env-file=.env scripts/seed-admin.ts"
+    "seed:admin": "tsx --env-file=.env scripts/seed-admin.ts",
+    "seed:units": "tsx --env-file=.env scripts/seed-units.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.0",

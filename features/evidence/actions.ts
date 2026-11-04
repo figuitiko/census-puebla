@@ -2,7 +2,7 @@
 
 import { del, head } from "@vercel/blob";
 import { authorizeEdit } from "@/features/census/authorize";
-import { EVIDENCE_TYPES, isEvidencePathname, MAX_EVIDENCE_BYTES } from "@/lib/blob";
+import { EVIDENCE_TYPES, isEvidencePathname, MAX_EVIDENCE_BYTES, MAX_EVIDENCE_MB } from "@/lib/blob";
 import { getMaxPhotos } from "@/lib/campaign-rules";
 import { prisma } from "@/lib/prisma";
 
@@ -30,7 +30,7 @@ export async function confirmEvidence(unitId: string, pathname: string): Promise
 
   if (!EVIDENCE_TYPES.includes(blob.contentType) || blob.size > MAX_EVIDENCE_BYTES) {
     await del(pathname).catch(() => {});
-    return { ok: false, error: "Archivo no permitido (solo imágenes de hasta 15 MB)" };
+    return { ok: false, error: `Archivo no permitido (solo imágenes de hasta ${MAX_EVIDENCE_MB} MB)` };
   }
 
   const maxPhotos = getMaxPhotos();

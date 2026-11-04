@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { deleteEvidence, confirmEvidence } from "@/features/evidence/actions";
-import { BLOB_ACCESS, evidencePrefix, safeFileName } from "@/lib/blob";
+import { BLOB_ACCESS, evidencePrefix, MAX_EVIDENCE_BYTES, MAX_EVIDENCE_MB, safeFileName } from "@/lib/blob";
 
 const UPLOAD_TIMEOUT_MS = 120_000;
 
@@ -53,6 +53,13 @@ export function Photos({ unitId, submissionId, photos, minPhotos, maxPhotos, dis
 
     for (const [index, file] of files.entries()) {
       if (cancelledRef.current) break;
+
+      // Fail fast: the server rejects it anyway, so do not spend the upload (and Blob quota) on it.
+      if (file.size > MAX_EVIDENCE_BYTES) {
+        toast.error(`${file.name}: pesa más de ${MAX_EVIDENCE_MB} MB`);
+        setProgress({ done: index + 1, total: files.length, percent: 0 });
+        continue;
+      }
 
       // The SDK retries failed requests with backoff for minutes, so a rejected upload would look
       // frozen. Abort after UPLOAD_TIMEOUT_MS and tell the user instead.
@@ -112,7 +119,7 @@ export function Photos({ unitId, submissionId, photos, minPhotos, maxPhotos, dis
         </Badge>
       </div>
       <p className="text-xs text-muted-foreground">
-        Se requieren al menos {minPhotos} fotos georreferenciadas (máximo {maxPhotos}). Imágenes de hasta 15 MB.
+        Se requieren al menos {minPhotos} fotos georreferenciadas (máximo {maxPhotos}). Imágenes de hasta {MAX_EVIDENCE_MB} MB.
       </p>
 
       <input

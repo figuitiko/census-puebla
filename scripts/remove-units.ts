@@ -6,6 +6,7 @@ const NAMES_TO_REMOVE = [
   "unidad nueva",
   "UNIDAD HABITACIONAL LA CIENEGA",
   "INFONAVIT LA MARIA",
+  "test-unit",
 ];
 
 /**

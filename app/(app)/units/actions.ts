@@ -23,7 +23,9 @@ export async function createUnit(_prev: ActionState, formData: FormData): Promis
 
   try {
     await prisma.$transaction(async (tx) => {
-      const count = await tx.campaignUnit.count({ where: { campaignId: campaign.id } });
+      // Max + 1, not count + 1: deleted units leave gaps, and a count would reuse a taken folio.
+      const folios = await tx.campaignUnit.findMany({ where: { campaignId: campaign.id }, select: { folio: true } });
+      const next = Math.max(0, ...folios.map((u) => Number(u.folio.replace(/\D/g, "")) || 0)) + 1;
       const complex = await tx.housingComplex.create({
         data: {
           name,
@@ -36,11 +38,12 @@ export async function createUnit(_prev: ActionState, formData: FormData): Promis
         data: {
           campaignId: campaign.id,
           complexId: complex.id,
-          folio: `UH-${String(count + 1).padStart(3, "0")}`,
+          folio: `UH-${String(next).padStart(3, "0")}`,
         },
       });
     });
-  } catch {
+  } catch (error) {
+    console.error("createUnit failed", error);
     // Concurrent creates can collide on the (campaignId, folio) unique index.
     return { ok: false, error: "No se pudo crear la unidad, intentá de nuevo" };
   }

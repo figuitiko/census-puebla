@@ -9,11 +9,12 @@ const NAMES_TO_REMOVE = [
 ];
 
 /**
- * Dry run by default: lists matches. Pass --apply to delete. A unit that already has a cedula is never deleted
- * (deleting it would cascade away captured data); it is reported and left for a manual decision.
+ * Dry run by default: lists matches. Pass --apply to delete. A unit that already has a cedula is kept (deleting it
+ * cascades away captured data) unless --force is also passed. Blob files of its photos are not removed.
  */
 async function main() {
   const apply = process.argv.includes("--apply");
+  const force = process.argv.includes("--force");
 
   const units = await prisma.campaignUnit.findMany({
     where: { complex: { OR: NAMES_TO_REMOVE.map((name) => ({ name: { equals: name, mode: "insensitive" as const } })) } },
@@ -24,8 +25,8 @@ async function main() {
 
   for (const unit of units) {
     const label = `${unit.folio} · ${unit.complex.name}`;
-    if (unit.submission) {
-      console.warn(`KEEP (has cedula, ${unit.submission.status}): ${label}`);
+    if (unit.submission && !force) {
+      console.warn(`KEEP (has cedula, ${unit.submission.status}): ${label}. Use --force to delete it with its cedula.`);
       continue;
     }
     if (!apply) {

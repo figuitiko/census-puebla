@@ -18,17 +18,17 @@ export default async function CampaignPage() {
           <span className="font-semibold">{maxPhotos}</span>
         </p>
         <p className="text-xs text-muted-foreground">
-          Se configuran con las variables de entorno <code>MIN_PHOTOS</code> (por defecto 1) y <code>MAX_PHOTOS</code> (por
-          defecto 50) y requieren reiniciar el servidor.
+          Se configuran con las variables de entorno <code>MIN_PHOTOS</code> (por defecto {CONTRACT_MIN_PHOTOS}) y <code>MAX_PHOTOS</code> (por
+          defecto {CONTRACT_MAX_PHOTOS}) y requieren reiniciar el servidor.
         </p>
         {minPhotos < CONTRACT_MIN_PHOTOS && (
           <p role="status" className="text-destructive">
-            Valor de prueba: el levantamiento real exige {CONTRACT_MIN_PHOTOS} fotos. Definí MIN_PHOTOS={CONTRACT_MIN_PHOTOS} antes de usar datos reales.
+            Mínimo reducido: el levantamiento real exige {CONTRACT_MIN_PHOTOS} fotos. Quitá MIN_PHOTOS o definí MIN_PHOTOS={CONTRACT_MIN_PHOTOS}.
           </p>
         )}
         {maxPhotos !== CONTRACT_MAX_PHOTOS && (
           <p role="status" className="text-destructive">
-            El límite aún no está activo: el levantamiento real permite {CONTRACT_MAX_PHOTOS} fotos. Definí MAX_PHOTOS={CONTRACT_MAX_PHOTOS} al terminar las pruebas.
+            Límite distinto del contrato: el levantamiento real permite {CONTRACT_MAX_PHOTOS} fotos. Quitá MAX_PHOTOS o definí MAX_PHOTOS={CONTRACT_MAX_PHOTOS}.
           </p>
         )}
       </div>

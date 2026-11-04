@@ -4,16 +4,16 @@ export const CONTRACT_MIN_PHOTOS = 10;
 /** Photos allowed per unit by the real survey (cedula field 25). */
 export const CONTRACT_MAX_PHOTOS = 20;
 
-/** Used when MAX_PHOTOS is not set: a loose ceiling so testing is not capped at the contract limit. */
-const DEFAULT_MAX_PHOTOS = 50;
+/** Used when MAX_PHOTOS is not set: the contract limit, so a missing env var can never loosen the cap. */
+const DEFAULT_MAX_PHOTOS = CONTRACT_MAX_PHOTOS;
 
-/** Used when MIN_PHOTOS is not set: deliberately lenient so local testing needs one photo. */
-const DEFAULT_MIN_PHOTOS = 1;
+/** Used when MIN_PHOTOS is not set: the contract minimum, so a missing env var can never weaken the gate. */
+const DEFAULT_MIN_PHOTOS = CONTRACT_MIN_PHOTOS;
 
 /**
  * Minimum confirmed photos per unit, from the MIN_PHOTOS env var (server-side, read on every call so
- * a restart is all a change needs). Unset or blank -> DEFAULT_MIN_PHOTOS. A malformed value throws on purpose:
- * silently falling back would quietly weaken the photo gate. Set MIN_PHOTOS=10 for real data.
+ * a restart is all a change needs). Unset or blank -> DEFAULT_MIN_PHOTOS (the contract value). A malformed value
+ * throws on purpose: silently falling back would quietly weaken the photo gate. Lower it only for local testing.
  */
 export function getMinPhotos(): number {
   const raw = process.env.MIN_PHOTOS?.trim();
@@ -28,7 +28,7 @@ export function getMinPhotos(): number {
 
 /**
  * Maximum confirmed photos per unit, from the MAX_PHOTOS env var (server-side). Unset or blank ->
- * DEFAULT_MAX_PHOTOS (cap not enabled yet, testing phase). Set MAX_PHOTOS=20 for real data. A malformed value
+ * DEFAULT_MAX_PHOTOS (the contract value). A malformed value
  * throws on purpose, and so does one below the minimum, which would make the cedula impossible to submit.
  */
 export function getMaxPhotos(): number {

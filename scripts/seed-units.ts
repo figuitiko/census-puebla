@@ -28,7 +28,6 @@ const UNITS: ReadonlyArray<readonly [name: string, juntaAuxiliar: string | null]
   ["UNIDAD HABITACIONAL LAS CARMELITAS", null],
   ["UNIDAD HABITACIONAL LA VICTORIA", null],
   ["UNIDAD HABITACIONAL LA GUADALUPANA", null],
-  ["UNIDAD HABITACIONAL LA CIENEGA", null],
   ["UNIDAD HABITACIONAL INDEPENDENCIA", null],
   ["UNIDAD HABITACIONAL GEO VILLAS DEL SUR", null],
   ["UNIDAD HABITACIONAL GALAXIA LA CALERA", null],
@@ -44,7 +43,6 @@ const UNITS: ReadonlyArray<readonly [name: string, juntaAuxiliar: string | null]
   ["UNIDAD HABITACIONAL (INFONAVIT) LA FLOR", "IGNACIO ZARAGOZA"],
   ["JARDINES DE SANTA ROSA", null],
   ["FRACCIONAMIENTO HACIENDA SANTA CLARA 1Y 2", null],
-  ["INFONAVIT LA MARIA", null],
 ];
 
 const formatFolio = (n: number) => `UH-${String(n).padStart(3, "0")}`;

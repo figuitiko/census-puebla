@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { deleteEvidence, confirmEvidence } from "@/features/evidence/actions";
+import { compressImage } from "@/lib/compress-image";
 import { BLOB_ACCESS, evidencePrefix, MAX_EVIDENCE_BYTES, MAX_EVIDENCE_MB, safeFileName } from "@/lib/blob";
 
 const UPLOAD_TIMEOUT_MS = 120_000;
@@ -51,10 +52,13 @@ export function Photos({ unitId, submissionId, photos, minPhotos, maxPhotos, dis
     cancelledRef.current = false;
     setProgress({ done: 0, total: files.length, percent: 0 });
 
-    for (const [index, file] of files.entries()) {
+    for (const [index, picked] of files.entries()) {
       if (cancelledRef.current) break;
 
-      // Fail fast: the server rejects it anyway, so do not spend the upload (and Blob quota) on it.
+      // Shrink before upload (saves Blob quota). Falls back to the original if the browser cannot decode it.
+      const file = await compressImage(picked);
+
+      // Fail fast if still too big (e.g. an undecodable HEIC): the server would reject it anyway.
       if (file.size > MAX_EVIDENCE_BYTES) {
         toast.error(`${file.name}: pesa más de ${MAX_EVIDENCE_MB} MB`);
         setProgress({ done: index + 1, total: files.length, percent: 0 });

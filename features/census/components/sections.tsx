@@ -133,7 +133,7 @@ export function SectionB({ values, set }: SectionProps) {
       {values.otherUnits === "YES" && (
         <div className="flex flex-col gap-4 rounded-md border p-4">
           <p className="text-sm font-medium">12. Tipo de unidad privativa</p>
-          <p className="text-xs text-muted-foreground">No incluyas viviendas. Vacío = sin dato, 0 = ninguna.</p>
+          <p className="text-xs text-muted-foreground">No incluyas viviendas. Obligatorio: completá cada tipo (0 = ninguna), el total debe ser mayor a 0.</p>
           {PRIVATE_UNIT_TYPES.map((type) => (
             <CountField
               key={type}

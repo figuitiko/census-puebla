@@ -149,6 +149,13 @@ export function submitIssues(raw: CedulaValues): Issue[] {
 
   need(v.dwellings !== null, 1, "10. Indicá el total de viviendas");
   need(v.otherUnits !== null, 1, "11. Indicá si hay otras unidades privativas");
+  if (v.otherUnits === "YES") {
+    // Saying "Sí" and then leaving every count at 0 contradicts field 11. Only checked on submit, so cedulas
+    // already stored with zeros are untouched.
+    const total = privateUnitsTotal(v);
+    need(total !== null, 1, "12. Indicá la cantidad de cada tipo de unidad privativa");
+    need(total === null || total > 0, 1, "12. Si hay otras unidades privativas, el total debe ser mayor a 0");
+  }
 
   need(v.greenAreas !== null, 2, "13. Indicá si hay áreas verdes");
   if (v.greenAreas === "YES") {

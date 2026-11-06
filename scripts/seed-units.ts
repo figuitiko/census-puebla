@@ -42,7 +42,8 @@ const UNITS: ReadonlyArray<readonly [name: string, juntaAuxiliar: string | null]
   ["UNIDAD HABITACIONAL (INFONAVIT) LA ROSA", null],
   ["UNIDAD HABITACIONAL (INFONAVIT) LA FLOR", "IGNACIO ZARAGOZA"],
   ["JARDINES DE SANTA ROSA", null],
-  ["FRACCIONAMIENTO HACIENDA SANTA CLARA 1Y 2", null],
+  ["FRACCIONAMIENTO HACIENDA SANTA CLARA 1", null],
+  ["FRACCIONAMIENTO HACIENDA SANTA CLARA 2", null],
 ];
 
 const formatFolio = (n: number) => `UH-${String(n).padStart(3, "0")}`;
